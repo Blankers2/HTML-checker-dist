@@ -1,0 +1,2553 @@
+<!DOCTYPE html>
+<html lang="ko" data-theme="dark">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description"
+    content="HTML Checker - 마케팅 HTML 번역 검수 도구. EN/JA 파일을 비교하며 한국어 검출, 검색, 동기 스크롤을 지원합니다.">
+  <title>HTML Checker</title>
+  <link rel="icon" type="image/png" href="icon.png">
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Noto+Sans+JP:wght@300;400;500;700&family=Noto+Sans+KR:wght@300;400;500;700&display=swap"
+    rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0f0f23;
+      --surface: #1a1a2e;
+      --surface2: #16213e;
+      --border: #2a2a4a;
+      --text: #e2e8f0;
+      --text2: #94a3b8;
+      --accent: #6366f1;
+      --accent2: #818cf8;
+      --warn: #ff4757;
+      --search-hl: #ffe066;
+      --success: #10b981;
+      --radius: 10px;
+      --font: 'Inter', 'Noto Sans KR', 'Noto Sans JP', sans-serif;
+      --sidebar-w: 360px
+    }
+
+    [data-theme="light"] {
+      --bg: #f1f5f9;
+      --surface: #fff;
+      --surface2: #f8fafc;
+      --border: #e2e8f0;
+      --text: #1e293b;
+      --text2: #64748b
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box
+    }
+
+    [hidden] {
+      display: none !important
+    }
+
+    body {
+      font-family: var(--font);
+      background: var(--bg);
+      color: var(--text);
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      transition: background .3s, color .3s
+    }
+
+    /* HEADER — single line */
+    header {
+      display: flex;
+      align-items: center;
+      padding: 6px 16px;
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+      gap: 10px;
+    }
+
+    .logo {
+      font-size: 15px;
+      font-weight: 700;
+      background: linear-gradient(135deg, var(--accent), #a78bfa);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      white-space: nowrap;
+    }
+
+    .logo::before {
+      content: '🧐';
+      -webkit-text-fill-color: initial
+    }
+
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-shrink: 0;
+    }
+
+    .header-center {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex: 1;
+      justify-content: center;
+    }
+
+    .header-right {
+      display: flex;
+      gap: 6px;
+      align-items: center;
+      flex-shrink: 0;
+    }
+
+    .btn {
+      padding: 6px 12px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--surface2);
+      color: var(--text);
+      cursor: pointer;
+      font: inherit;
+      font-size: 12px;
+      transition: all .2s;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      white-space: nowrap
+    }
+
+    .btn:hover {
+      border-color: var(--accent);
+      background: rgba(99, 102, 241, .12)
+    }
+
+    .btn-primary {
+      background: var(--accent);
+      color: #fff;
+      border-color: var(--accent)
+    }
+
+    .btn-primary:hover {
+      background: var(--accent2)
+    }
+
+    .btn-danger {
+      background: rgba(255, 71, 87, 0.15);
+      color: #ff7088;
+      border-color: rgba(255, 71, 87, 0.5)
+    }
+
+    .btn-danger:hover {
+      background: rgba(255, 71, 87, 0.28);
+      border-color: var(--warn);
+      color: #fff
+    }
+
+    .btn-sm {
+      padding: 4px 8px;
+      font-size: 11px
+    }
+
+    .file-label {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      padding: 4px 10px;
+      border: 1px dashed var(--border);
+      border-radius: var(--radius);
+      cursor: pointer;
+      font-size: 11px;
+      transition: all .2s;
+      color: var(--text2)
+    }
+
+    .file-label:hover {
+      border-color: var(--accent);
+      color: var(--text)
+    }
+
+    .file-label input {
+      display: none
+    }
+
+    .file-label.loaded {
+      border-color: var(--success);
+      border-style: solid;
+      color: var(--success)
+    }
+
+    .scroll-controls {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 11px
+    }
+
+    .scroll-controls label {
+      display: flex;
+      align-items: center;
+      gap: 3px;
+      cursor: pointer
+    }
+
+    .header-sep {
+      width: 1px;
+      height: 18px;
+      background: var(--border);
+      flex-shrink: 0;
+    }
+
+    /* Toggle Switch */
+    .toggle-switch {
+      position: relative;
+      display: inline-block;
+      width: 36px;
+      height: 18px;
+      flex-shrink: 0;
+    }
+
+    .toggle-switch input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+
+    .toggle-slider {
+      position: absolute;
+      cursor: pointer;
+      inset: 0;
+      background: var(--border);
+      border-radius: 18px;
+      transition: .25s;
+    }
+
+    .toggle-slider::before {
+      content: '';
+      position: absolute;
+      height: 14px;
+      width: 14px;
+      left: 2px;
+      bottom: 2px;
+      background: #fff;
+      border-radius: 50%;
+      transition: .25s;
+    }
+
+    .toggle-switch input:checked+.toggle-slider {
+      background: var(--accent);
+    }
+
+    .toggle-switch input:checked+.toggle-slider::before {
+      transform: translateX(18px);
+    }
+
+    /* Shortcut row (헤더 단축키 드롭다운 안에서 사용) */
+    .shortcut-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 3px 0;
+    }
+
+    .shortcut-key {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      padding: 1px 6px;
+      border-radius: 4px;
+      font-family: 'Consolas', 'Monaco', monospace;
+      font-size: 10px;
+      color: var(--accent2);
+      white-space: nowrap;
+    }
+
+    /* MAIN LAYOUT */
+    .main-area {
+      flex: 1;
+      display: flex;
+      overflow: hidden;
+      min-height: 0;
+      position: relative
+    }
+
+    .split-view {
+      flex: 1;
+      display: flex;
+      overflow: hidden;
+      min-height: 0;
+      position: relative
+    }
+
+    .panel {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      min-width: 150px;
+      overflow: hidden;
+      position: relative
+    }
+
+    .panel-header {
+      padding: 5px 12px;
+      font-size: 12px;
+      font-weight: 600;
+      background: var(--surface2);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-shrink: 0
+    }
+
+    .panel-header-title {
+      flex-shrink: 0;
+    }
+
+    .panel-filename {
+      flex: 1;
+      text-align: center;
+      font-weight: 500;
+      font-size: 11px;
+      color: var(--text2);
+      font-family: 'Consolas', 'Monaco', monospace;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      user-select: text;
+      -webkit-user-select: text;
+      cursor: text;
+      padding: 0 8px;
+    }
+
+    .panel-filename:empty::before {
+      content: '— 파일 미선택 —';
+      color: var(--border);
+    }
+
+    .iframe-container {
+      flex: 1;
+      position: relative;
+      overflow: hidden;
+      background: #fff;
+    }
+
+    .iframe-container iframe {
+      position: absolute;
+      top: 0;
+      width: 800px;
+      border: none;
+      transform-origin: top center;
+    }
+
+    /* Drag overlay: blocks iframe pointer-events during file drag */
+    .drag-shield {
+      display: none;
+      position: absolute;
+      inset: 0;
+      z-index: 10;
+    }
+
+    .global-drag-over .drag-shield {
+      display: block;
+    }
+
+    /* Disable file-label clicks during drag to prevent native picker dialog */
+    .global-drag-over .file-label {
+      pointer-events: none;
+    }
+
+    /* Compact mode removed — single header always visible */
+
+    .resize-handle {
+      width: 4px;
+      cursor: default;
+      background: var(--border);
+      transition: background .2s, width .2s;
+      flex-shrink: 0;
+      z-index: 20;
+      pointer-events: none;
+      opacity: 0.3;
+    }
+
+    /* 리사이저 활성화 상태 */
+    .resize-enabled .resize-handle {
+      width: 5px;
+      cursor: col-resize;
+      pointer-events: auto;
+      opacity: 1;
+    }
+
+    .resize-enabled .resize-handle:hover,
+    .resize-enabled .resize-handle.active {
+      background: var(--accent);
+    }
+
+    /* 너비조절 버튼 — ON 상태 */
+    #resizerToggleBtn.resizer-on {
+      background: rgba(99, 102, 241, 0.2);
+      border-color: var(--accent);
+      color: var(--accent2);
+    }
+
+    /* KR 원본 오버레이 — 사전 렌더, visibility 토글로 끊김없이 전환 */
+    .kr-overlay {
+      position: absolute;
+      top: 38px;        /* panel-header 높이만큼 비워둠 — 헤더 가리지 않음 */
+      bottom: 0;
+      left: 50%;        /* 사전에 우측 50%에 위치시켜 layout 비용 분산 */
+      width: 50%;
+      border: 0;
+      background: #fff;
+      z-index: 30;
+      box-shadow: -4px 0 12px rgba(0,0,0,0.4), 4px 0 12px rgba(0,0,0,0.4);
+      visibility: hidden;     /* 기본 비가시 — display:none이 아니므로 layout 유지 */
+      transition: none;
+      pointer-events: none;   /* 마우스·키보드 이벤트를 하위 패널에 통과 — 뷰어 전용 */
+    }
+    .kr-overlay.kr-active {
+      visibility: visible;
+    }
+    .kr-overlay-label {
+      position: absolute;
+      top: 46px;
+      z-index: 31;
+      background: rgba(255, 71, 87, 0.92);
+      color: #fff;
+      font-weight: 700;
+      font-size: 11px;
+      padding: 5px 12px;
+      border-radius: var(--radius);
+      pointer-events: none;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+      visibility: hidden;
+    }
+    .kr-overlay-label.kr-active {
+      visibility: visible;
+    }
+
+    /* MINIMAP + Custom Scrollbar */
+    .minimap {
+      position: absolute;
+      right: 0;
+      top: 0;
+      bottom: 0;
+      width: 14px;
+      background: rgba(0, 0, 0, 0.06);
+      pointer-events: auto;
+      z-index: 10;
+      border-left: 1px solid rgba(0, 0, 0, 0.12);
+      cursor: pointer;
+    }
+
+    .mm-thumb {
+      position: absolute;
+      left: 2px;
+      right: 2px;
+      background: rgba(99, 102, 241, 0.35);
+      border-radius: 3px;
+      cursor: grab;
+      transition: background .15s;
+      z-index: 4;
+      min-height: 24px;
+    }
+
+    .mm-thumb:hover {
+      background: rgba(99, 102, 241, 0.6);
+    }
+
+    .mm-thumb.dragging {
+      background: rgba(99, 102, 241, 0.75);
+      cursor: grabbing;
+    }
+
+    .minimap-mark {
+      position: absolute;
+      left: 0;
+      right: 0;
+      height: 4px;
+      opacity: 1;
+      box-shadow: 0 0 3px rgba(0, 0, 0, 0.5)
+    }
+
+    /* 다중검색 색상 (한국어 빨강 제외 — 노랑/파랑/초록/보라/주황) */
+    .mark-search-0 { background: #ffaa00; z-index: 2; }   /* 노랑 (기본) */
+    .mark-search-1 { background: #3b82f6; z-index: 2; }   /* 파랑 */
+    .mark-search-2 { background: #10b981; z-index: 2; }   /* 초록 */
+    .mark-search-3 { background: #a855f7; z-index: 2; }   /* 보라 */
+    .mark-search-4 { background: #f97316; z-index: 2; }   /* 주황 */
+    .mark-search-5 { background: #ec4899; z-index: 2; }   /* 핑크 */
+    .mark-search-6 { background: #06b6d4; z-index: 2; }   /* 청록 */
+    .mark-search-7 { background: #84cc16; z-index: 2; }   /* 라임 */
+    .mark-search-8 { background: #ef4444; z-index: 2; }   /* 빨강 */
+    .mark-search-9 { background: #1f2937; z-index: 2; }   /* 검정 */
+    /* legacy */
+    .mark-search { background: #ffaa00; z-index: 2; }
+
+    .mark-korean {
+      background: #ff2222;
+      z-index: 3;
+    }
+
+    /* EMPTY / DROP STATE */
+    .drop-zone {
+      position: absolute;
+      inset: 0;
+      top: 28px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      color: var(--text2);
+      gap: 10px;
+      font-size: 13px;
+      z-index: 5;
+      background: var(--bg);
+      transition: all .2s;
+      pointer-events: none
+    }
+
+    .drop-zone .icon {
+      font-size: 44px;
+      opacity: .5
+    }
+
+    .global-drag-over .drop-zone {
+      background: rgba(99, 102, 241, .1);
+      border: 2px dashed var(--accent);
+      color: var(--accent)
+    }
+
+    .global-drag-over .drop-zone .icon {
+      opacity: 1
+    }
+
+    .drag-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 9999;
+      background: rgba(15, 15, 35, 0.8);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+      font-size: 24px;
+      font-weight: 700;
+      backdrop-filter: blur(4px);
+      border: 4px dashed var(--accent)
+    }
+
+    .global-drag-over .drag-overlay {
+      display: flex
+    }
+
+    .korean-badge {
+      background: var(--warn);
+      color: #fff;
+      font-size: 10px;
+      padding: 1px 7px;
+      border-radius: 12px;
+      font-weight: 600;
+      animation: pulse 2s infinite
+    }
+
+    /* 헤더 한국어 검사 — 드롭다운 */
+    .korean-wrap {
+      position: relative;
+      display: inline-flex;
+    }
+    #headerKoreanBtn .korean-status-text {
+      font-weight: 700;
+      margin-left: 2px;
+    }
+    #headerKoreanBtn.has-results {
+      background: rgba(255, 71, 87, 0.18);
+      border-color: var(--warn);
+      color: #ffb3bd;
+      animation: pulse 2s infinite;
+    }
+    #headerKoreanBtn.has-results .korean-status-text {
+      color: #fff;
+    }
+    #headerKoreanBtn.clean-result {
+      background: rgba(34, 197, 94, 0.15);
+      border-color: var(--success);
+      color: var(--success);
+    }
+    #headerKoreanBtn.clean-result .korean-status-text {
+      color: var(--success);
+    }
+    /* 헤더 드롭다운 일반 컨테이너 (한국어/추출/단축키/히스토리 공유) */
+    .hdr-dropdown-wrap {
+      position: relative;
+      display: inline-flex;
+    }
+    .hdr-dropdown,
+    .korean-dropdown {
+      position: absolute;
+      top: calc(100% + 6px);
+      right: 0;
+      width: 360px;
+      max-height: 460px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+      z-index: 200;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    .korean-dropdown {
+      width: 320px;
+      max-height: 400px;
+    }
+    .hdr-dropdown-head,
+    .korean-dropdown-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      padding: 8px 10px;
+      background: var(--surface2);
+      border-bottom: 1px solid var(--border);
+      font-size: 12px;
+      font-weight: 600;
+    }
+    .hdr-dropdown-body {
+      overflow-y: auto;
+      max-height: 400px;
+      padding: 8px 10px;
+      font-size: 12px;
+    }
+    .korean-dropdown-status { flex: 1; }
+    .korean-dropdown-status.warn { color: #ff9aa6; }
+    .korean-dropdown-status.ok { color: var(--success); }
+    .korean-dropdown-list {
+      overflow-y: auto;
+      max-height: 340px;
+      padding: 4px;
+    }
+    .korean-dropdown-list:empty { display: none; }
+    /* KR 원본 버튼 활성 상태 */
+    #krOverlayBtn:not([disabled]) {
+      border-color: rgba(255, 71, 87, 0.4);
+    }
+    #krOverlayBtn.active {
+      background: rgba(255, 71, 87, 0.18);
+      border-color: var(--warn);
+      color: #fff;
+    }
+    #krOverlayBtn[disabled] {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
+
+    @keyframes pulse {
+
+      0%,
+      100% {
+        opacity: 1
+      }
+
+      50% {
+        opacity: .7
+      }
+    }
+
+    /* SIDEBAR */
+    .sidebar {
+      width: var(--sidebar-w);
+      background: var(--surface);
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      flex-shrink: 0;
+      transition: margin-left .3s ease, opacity .3s;
+      overflow: hidden;
+      z-index: 30
+    }
+
+    .sidebar.collapsed {
+      margin-left: calc(var(--sidebar-w) * -1);
+      opacity: 0;
+      pointer-events: none
+    }
+
+    .sidebar-toggle {
+      position: absolute;
+      left: 0;
+      top: 50%;
+      transform: translateY(-50%);
+      z-index: 40;
+      width: 24px;
+      height: 60px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-left: none;
+      border-radius: 0 8px 8px 0;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      color: var(--text2);
+      transition: all .2s
+    }
+
+    .sidebar-toggle:hover {
+      background: var(--accent);
+      color: #fff;
+      width: 28px
+    }
+
+    .sidebar-header {
+      padding: 10px 14px;
+      font-size: 13px;
+      font-weight: 600;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-shrink: 0;
+      gap: 8px;
+    }
+    .sidebar-title {
+      flex: 1;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .sidebar-header-actions {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-shrink: 0;
+    }
+    /* 사이드바 안의 hdr-dropdown — 폭만 사이드바에 맞게 조정 */
+    .sidebar-header .hdr-dropdown {
+      width: 310px;
+      max-height: 420px;
+    }
+
+    /* 검색 히스토리 항목 */
+    .history-item {
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 6px 8px;
+      margin-bottom: 6px;
+      cursor: pointer;
+      background: var(--surface2);
+      transition: background .15s, border-color .15s;
+    }
+    .history-item:hover {
+      background: rgba(99,102,241,0.1);
+      border-color: var(--accent);
+    }
+    .history-item-head {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 11px;
+      color: var(--text2);
+      margin-bottom: 4px;
+    }
+    .history-item-head .hist-ts { flex: 1; font-weight: 600; }
+    .history-item-head .hist-meta {
+      font-weight: 700;
+      color: var(--accent2);
+      font-size: 10px;
+    }
+    .history-item-head .hist-del {
+      background: transparent;
+      border: none;
+      color: var(--text2);
+      cursor: pointer;
+      font-size: 14px;
+      line-height: 1;
+      padding: 0 4px;
+    }
+    .history-item-head .hist-del:hover { color: var(--warn); }
+    .history-row-preview {
+      font-size: 11px;
+      color: var(--text);
+      line-height: 1.4;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .history-row-preview .hist-en { color: #93c5fd; }
+    .history-row-preview .hist-ja { color: #fca5a5; }
+    .history-row-preview .hist-empty { color: var(--text2); opacity: 0.5; }
+    .history-row-preview.hist-more { color: var(--text2); font-style: italic; }
+
+    .sidebar-content {
+      flex: 1;
+      overflow-y: auto;
+      padding: 10px
+    }
+
+    .tool-section {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 10px;
+      margin-bottom: 10px
+    }
+
+    .tool-section h3 {
+      font-size: 13px;
+      font-weight: 600;
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 5px
+    }
+
+    .tm-actions {
+      margin-bottom: 10px;
+      display: flex;
+      gap: 5px;
+      align-items: stretch;
+    }
+    .tm-actions .btn-search {
+      flex: 1;
+      min-width: 60px;
+      font-weight: 700;
+      letter-spacing: 1px;
+      justify-content: center;
+    }
+    .tm-actions .btn-add {
+      flex-shrink: 0;
+      padding: 4px 9px !important;
+      font-weight: 700;
+    }
+    .tm-actions .btn-clear {
+      flex-shrink: 0;
+    }
+
+    .search-rows {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .search-row {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      padding: 6px 8px;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-left: 3px solid var(--row-color, var(--accent));
+      border-radius: var(--radius);
+      position: relative;
+    }
+    .search-row-head {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 10px;
+      color: var(--text2);
+    }
+    .search-row-color {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: var(--row-color, var(--accent));
+      flex-shrink: 0;
+    }
+    .search-row-label {
+      font-weight: 600;
+      flex: 1;
+    }
+    .search-row-remove {
+      cursor: pointer;
+      color: var(--text2);
+      font-size: 14px;
+      line-height: 1;
+      padding: 0 4px;
+      background: transparent;
+      border: none;
+    }
+    .search-row-remove:hover {
+      color: var(--warn);
+    }
+    .search-row-input {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .search-row-input span {
+      font-size: 10px;
+      font-weight: 700;
+      color: var(--text2);
+      width: 20px;
+      flex-shrink: 0;
+    }
+    .search-row-input input {
+      flex: 1;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      color: var(--text);
+      font: inherit;
+      font-size: 12px;
+      outline: none;
+      padding: 4px 8px;
+    }
+    .search-row-input input:focus {
+      border-color: var(--row-color, var(--accent));
+    }
+
+    .search-inputs {
+      display: flex;
+      flex-direction: column;
+      gap: 6px
+    }
+
+    .search-input-group {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 4px 8px
+    }
+
+    .search-input-group:focus-within {
+      border-color: var(--accent)
+    }
+
+    .search-input-group span {
+      font-size: 10px;
+      font-weight: 700;
+      color: var(--text2);
+      width: 20px
+    }
+
+    .search-input-group input {
+      flex: 1;
+      background: transparent;
+      border: none;
+      color: var(--text);
+      font: inherit;
+      font-size: 12px;
+      outline: none;
+      padding: 4px 0
+    }
+
+
+    /* 검색어별 결과 카운트 */
+    .result-count-row {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-top: 8px;
+      flex-wrap: wrap;
+    }
+    .result-count-pill-q {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 3px 10px;
+      border-radius: 10px;
+      font-size: 11px;
+      font-weight: 600;
+      border: 1px solid;
+      white-space: nowrap;
+      cursor: pointer;
+      user-select: none;
+      transition: opacity 0.15s, transform 0.1s, box-shadow 0.15s;
+    }
+    .result-count-pill-q:hover {
+      transform: scale(1.06);
+    }
+    .result-count-pill-q.dimmed {
+      opacity: 0.32;
+    }
+    .result-count-pill-q.active-filter {
+      box-shadow: 0 0 0 2px currentColor, 0 2px 6px rgba(0,0,0,0.25);
+      opacity: 1;
+    }
+    .result-count-pill-q b {
+      font-weight: 800;
+      letter-spacing: -0.3px;
+    }
+    .result-count-pill-all {
+      font-size: 10px !important;
+      font-weight: 700 !important;
+    }
+
+    /* 결과 리스트 EN/JA 분리 헤더 */
+    .result-section-head {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 6px;
+      background: var(--surface2);
+      border-bottom: 1px solid var(--border);
+      font-size: 10px;
+      font-weight: 700;
+      color: var(--text2);
+      position: sticky;
+      top: 0;
+      z-index: 1;
+    }
+    .result-section-head.en { color: var(--accent2); }
+    .result-section-head.ja { color: #ff7088; }
+    .result-section-head .sect-count {
+      margin-left: auto;
+      font-weight: 600;
+      opacity: 0.85;
+    }
+
+    .search-options {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+      font-size: 11px;
+      margin-top: 8px
+    }
+
+    .search-options label {
+      display: flex;
+      align-items: center;
+      gap: 2px;
+      cursor: pointer;
+      color: var(--text2)
+    }
+
+    .result-list {
+      max-height: 160px;
+      overflow-y: auto;
+      font-size: 11px;
+      margin-top: 6px
+    }
+
+    .result-item {
+      padding: 4px 6px;
+      border-radius: 6px;
+      cursor: pointer;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 4px;
+      transition: background .15s
+    }
+
+    .result-item:hover {
+      background: rgba(99, 102, 241, .15)
+    }
+
+    .lang-tag {
+      font-size: 9px;
+      padding: 1px 5px;
+      border-radius: 4px;
+      font-weight: 600;
+      flex-shrink: 0
+    }
+
+    .lang-tag.en {
+      background: rgba(59, 130, 246, .2);
+      color: #60a5fa
+    }
+
+    .lang-tag.ja {
+      background: rgba(244, 63, 94, .2);
+      color: #fb7185
+    }
+
+    .result-count {
+      font-size: 11px;
+      color: var(--text2);
+      margin-top: 4px
+    }
+
+    .extract-view {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      max-height: 250px;
+      overflow: hidden;
+      margin-top: 6px
+    }
+
+    .extract-col {
+      flex: 1;
+      overflow-y: auto;
+      font-size: 11px;
+      background: var(--bg);
+      border-radius: var(--radius);
+      padding: 6px;
+      max-height: 120px
+    }
+
+    .extract-col-label {
+      font-size: 10px;
+      font-weight: 600;
+      color: var(--text2);
+      margin-bottom: 2px
+    }
+
+    .extract-item {
+      padding: 3px 5px;
+      border-bottom: 1px solid var(--border);
+      cursor: pointer;
+      transition: background .15s;
+      line-height: 1.4
+    }
+
+    .extract-item:hover {
+      background: rgba(99, 102, 241, .1)
+    }
+
+    .toast {
+      position: fixed;
+      bottom: 16px;
+      right: 16px;
+      padding: 8px 16px;
+      background: var(--accent);
+      color: #fff;
+      border-radius: var(--radius);
+      font-size: 12px;
+      z-index: 999;
+      transform: translateY(80px);
+      opacity: 0;
+      transition: all .3s
+    }
+
+    .toast.show {
+      transform: translateY(0);
+      opacity: 1
+    }
+  </style>
+</head>
+
+<body>
+  <header>
+    <div class="header-left">
+      <div class="logo">HTML Checker</div>
+      <div class="header-sep"></div>
+      <label class="file-label" id="enLabel"><input type="file" id="enFile" accept=".html,.htm"><span>📁 EN</span></label>
+      <label class="file-label" id="jaLabel"><input type="file" id="jaFile" accept=".html,.htm"><span>📁 JA</span></label>
+      <label class="file-label" id="krLabel" title="한국어 원본 (선택사항)"><input type="file" id="krFile" accept=".html,.htm"><span>📁 KR</span></label>
+    </div>
+    <div class="header-center">
+      <div class="scroll-controls">
+        <label class="toggle-switch" title="상시 동기화 (F8)"><input type="checkbox" id="syncScroll" checked><span class="toggle-slider"></span></label>
+        <span>동기화</span>
+        <button class="btn btn-sm" id="syncNowBtn">📍 현재 위치 동기화</button>
+      </div>
+      <div class="header-sep"></div>
+      <button class="btn btn-sm" id="reloadBtn" title="양쪽 iframe 새로고침 (이미지 재로드)">🔄 새로고침</button>
+      <button class="btn btn-sm" id="headerSearchBtn" title="검색 (Ctrl+Shift+F)">🔎 검색</button>
+      <div class="hdr-dropdown-wrap korean-wrap">
+        <button class="btn btn-sm" id="headerKoreanBtn" title="한국어 검사 결과 (클릭으로 상세보기)">🇰🇷 <span class="korean-status-text" id="koreanStatusText">한국어 검사</span></button>
+        <div class="hdr-dropdown korean-dropdown" id="koreanDropdown" hidden>
+          <div class="hdr-dropdown-head korean-dropdown-head">
+            <span class="korean-dropdown-status ok" id="koreanDropdownStatus">검사 전</span>
+            <button class="btn btn-sm" id="koreanRescanBtn" title="다시 검사">🔄 재검사</button>
+          </div>
+          <div class="korean-dropdown-list result-list" id="koreanResults"></div>
+        </div>
+      </div>
+    </div>
+    <div class="header-right">
+      <button class="btn btn-sm" id="resizerToggleBtn" title="패널 너비 조절 ON/OFF (비활성화 시 1:1 고정)">⇔ 너비조절</button>
+      <button class="btn btn-sm" id="krOverlayBtn" title="원본(KR) 비교 — \\(백슬래시) 누른 동안 반대편에 표시 / 클릭으로 sticky" disabled>🇰🇷 원본</button>
+      <div class="hdr-dropdown-wrap">
+        <button class="btn btn-sm" id="extractBtn" title="텍스트 추출 (EN/JA 모두)">📝 텍스트 추출</button>
+        <div class="hdr-dropdown" id="extractDropdown" hidden>
+          <div class="hdr-dropdown-head">
+            <span>텍스트 추출</span>
+            <button class="btn btn-sm" id="extractRunBtn">🔄 추출</button>
+          </div>
+          <div class="hdr-dropdown-body">
+            <div class="extract-view" id="extractView">
+              <div>
+                <div class="extract-col-label">🇺🇸 EN</div>
+                <div class="extract-col" id="enExtract"></div>
+              </div>
+              <div>
+                <div class="extract-col-label">🇯🇵 JA</div>
+                <div class="extract-col" id="jaExtract"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <button class="btn btn-sm" id="exportBtn" title="오류 기록 내보내기">📋 내보내기</button>
+      <div class="hdr-dropdown-wrap">
+        <button class="btn btn-sm" id="shortcutBtn" title="단축키 모음">⌨️ 단축키</button>
+        <div class="hdr-dropdown" id="shortcutDropdown" hidden>
+          <div class="hdr-dropdown-head"><span>⌨️ 단축키</span></div>
+          <div class="hdr-dropdown-body">
+            <div class="shortcut-row"><span>검수 도구 열기/닫기</span><span class="shortcut-key">Esc</span></div>
+            <div class="shortcut-row"><span>상시 동기화 ON/OFF</span><span class="shortcut-key">F8</span></div>
+            <div class="shortcut-row"><span>동기 스크롤</span><span class="shortcut-key">Shift + Wheel</span></div>
+            <div class="shortcut-row"><span>검색 패널 열기</span><span class="shortcut-key">Ctrl + Shift + F</span></div>
+            <div class="shortcut-row"><span>검색 초기화</span><span class="shortcut-key">Ctrl + Shift + X</span></div>
+            <div class="shortcut-row"><span>검색어 비우기 (포커스 시)</span><span class="shortcut-key">Esc</span></div>
+            <div class="shortcut-row"><span>원본(KR) 비교 ON/OFF 토글</span><span class="shortcut-key">`</span></div>
+          </div>
+        </div>
+      </div>
+      <button class="btn btn-sm" id="themeBtn">🌙</button>
+    </div>
+  </header>
+
+  <div class="drag-overlay" id="dragOverlay">파일을 여기에 놓으세요! (자동 감지)</div>
+  <div class="main-area" id="mainArea">
+
+    <div class="sidebar collapsed" id="sidebar">
+      <div class="sidebar-header">
+        <span class="sidebar-title">🔎 TM 다중 검색</span>
+        <div class="sidebar-header-actions">
+          <div class="hdr-dropdown-wrap">
+            <button class="btn btn-sm" id="historyBtn" title="검색 히스토리 (최근 20개)">📜 히스토리</button>
+            <div class="hdr-dropdown" id="historyDropdown" hidden>
+              <div class="hdr-dropdown-head">
+                <span>📜 검색 히스토리</span>
+                <button class="btn btn-sm btn-danger" id="historyClearAllBtn" title="전체 삭제">🗑️ 전체 삭제</button>
+              </div>
+              <div class="hdr-dropdown-body" id="historyList"></div>
+            </div>
+          </div>
+          <button class="btn btn-sm" id="sidebarClose" title="닫기">✕</button>
+        </div>
+      </div>
+      <div class="sidebar-content">
+        <div class="tool-section">
+          <div class="tm-actions">
+            <button class="btn btn-sm btn-danger btn-clear" id="clearSearchBtn" title="초기화 (Ctrl+Shift+X)">초기화</button>
+            <button class="btn btn-primary btn-sm btn-search" id="searchBtn">검색</button>
+            <button class="btn btn-sm btn-add" id="addSearchRowBtn" title="검색어 추가 (최대 10개)">＋ 추가</button>
+          </div>
+          <div class="search-rows" id="searchRows">
+            <!-- search row template (color, EN/JA inputs, remove btn) is rendered by JS -->
+          </div>
+          <div class="search-options">
+            <label><input type="checkbox" id="optBreak" checked><span>줄바꿈</span></label>
+            <label><input type="checkbox" id="optFW" checked><span>전각↔반각</span></label>
+            <label><input type="checkbox" id="optSpace" checked><span>공백</span></label>
+            <label><input type="checkbox" id="optCase" checked><span>대소문자</span></label>
+            <label><input type="checkbox" id="optKana"><span>ひら↔カタ</span></label>
+          </div>
+          <div class="result-count" id="searchCount"></div>
+          <div class="result-list" id="searchResults"></div>
+        </div>
+      </div>
+    </div>
+
+    <button class="sidebar-toggle" id="sidebarToggle">▶</button>
+
+    <div class="split-view" id="splitView">
+      <div class="panel" id="enPanel">
+        <div class="panel-header">
+          <span class="panel-header-title">🇺🇸 English</span>
+          <span class="panel-filename" id="enFilename" title="파일명 (더블클릭으로 선택 가능)"></span>
+          <span class="korean-badge" id="enBadge" hidden></span>
+        </div>
+        <div class="drop-zone" id="enDrop"><span class="icon">📄</span>EN/JA 파일을 드래그하세요</div>
+        <div class="iframe-container" id="enContainer">
+          <iframe id="enFrame" hidden></iframe>
+          <div class="drag-shield"></div>
+          <div class="minimap" id="enMinimap">
+            <div class="mm-thumb" id="enThumb" hidden></div>
+          </div>
+        </div>
+      </div>
+      <div class="resize-handle" id="resizeHandle"></div>
+      <div class="panel" id="jaPanel">
+        <div class="panel-header">
+          <span class="panel-header-title">🇯🇵 Japanese</span>
+          <span class="panel-filename" id="jaFilename" title="파일명 (더블클릭으로 선택 가능)"></span>
+          <span class="korean-badge" id="jaBadge" hidden></span>
+        </div>
+        <div class="drop-zone" id="jaDrop"><span class="icon">📄</span>EN/JA 파일을 드래그하세요</div>
+        <div class="iframe-container" id="jaContainer">
+          <iframe id="jaFrame" hidden></iframe>
+          <div class="drag-shield"></div>
+          <div class="minimap" id="jaMinimap">
+            <div class="mm-thumb" id="jaThumb" hidden></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- KR 원본 비교 — 사전 렌더, hold-to-show 시 .kr-active 클래스로 visibility 토글 -->
+      <iframe id="krFrame" class="kr-overlay"></iframe>
+      <div class="kr-overlay-label" id="krOverlayLabel">🇰🇷 원본</div>
+    </div>
+  </div>
+
+
+  <div class="toast" id="toast"></div>
+
+  <script>
+    const S = { errors: [] };
+    const $ = id => document.getElementById(id);
+
+    /* THEME */
+    $('themeBtn').onclick = () => { const h = document.documentElement, d = h.dataset.theme === 'dark'; h.dataset.theme = d ? 'light' : 'dark'; $('themeBtn').textContent = d ? '☀️' : '🌙'; localStorage.setItem('oy-theme', h.dataset.theme) };
+    if (localStorage.getItem('oy-theme')) { document.documentElement.dataset.theme = localStorage.getItem('oy-theme'); if (localStorage.getItem('oy-theme') === 'light') $('themeBtn').textContent = '☀️' }
+
+    /* TOAST */
+    function toast(m) { const t = $('toast'); t.textContent = m; t.classList.add('show'); setTimeout(() => t.classList.remove('show'), 2500) }
+
+    /* SIDEBAR */
+    function toggleSidebar(show) {
+      const sb = $('sidebar'), tg = $('sidebarToggle');
+      if (show === undefined) show = sb.classList.contains('collapsed');
+      sb.classList.toggle('collapsed', !show);
+      tg.textContent = show ? '◀' : '▶';
+      localStorage.setItem('oy-sidebar', show ? 'open' : 'closed');
+    }
+    $('headerSearchBtn').onclick = () => { toggleSidebar(true); setTimeout(() => { if (typeof focusFirstSearchInput === 'function') focusFirstSearchInput(); }, 100); };
+    $('sidebarToggle').onclick = () => toggleSidebar();
+    $('sidebarClose').onclick = () => toggleSidebar(false);
+    if (localStorage.getItem('oy-sidebar') === 'open') toggleSidebar(true);
+
+    /* IFRAME SCALING — iframe 자체를 800px로 고정하고 외부에서 scale, 중앙 정렬 */
+    function applyIframeScale(iframe) {
+      const container = iframe.parentElement;
+      if (!container) return;
+      const cw = container.clientWidth;
+      const ch = container.clientHeight;
+      const scale = Math.min(1, cw / 800);
+      iframe.style.transform = 'scale(' + scale + ')';
+      iframe.style.height = Math.ceil(ch / scale) + 'px';
+      // 중앙 정렬: scale 후 시각적 너비 = 800*scale, 여백 = (cw - 800*scale)/2
+      const visualWidth = 800 * scale;
+      const offsetX = Math.max(0, (cw - visualWidth) / 2);
+      iframe.style.left = offsetX + 'px';
+    }
+
+    // ResizeObserver로 패널 크기 변경 시 자동 재계산
+    const iframeScaleObserver = new ResizeObserver(entries => {
+      entries.forEach(e => {
+        const iframe = e.target.querySelector('iframe');
+        if (iframe && !iframe.hidden) applyIframeScale(iframe);
+      });
+    });
+    document.querySelectorAll('.iframe-container').forEach(c => iframeScaleObserver.observe(c));
+
+    let filesLoaded = { en: false, ja: false, kr: false };
+    let loadedHTML = { en: null, ja: null, kr: null };
+    let loadedFilename = { en: null, ja: null, kr: null };
+
+    const _bridgeFn = function () {
+      const KO = /[\uAC00-\uD7AF\u1100-\u11FF\u3130-\u318F]+/g;
+      function norm(t, o) {
+        let r = t;
+        // 줄바꿈 옵션 ON: \n / \r 완전 제거 (zero-width). CJK 「<br>」 분리 매칭 가능
+        if (o.brk) r = r.replace(/[\n\r]+/g, '');
+        if (o.fw) { r = r.replace(/[\uFF01-\uFF5E]/g, c => String.fromCharCode(c.charCodeAt(0) - 65248)); r = r.replace(/\u3000/g, ' '); }
+        // 공백 옵션 ON: 모든 공백/zero-width 제거 (일본어 무공백 표기 대응)
+        if (o.sp) r = r.replace(/[\s\u00A0\u3000\u200B-\u200D\uFEFF]+/g, '');
+        if (o.ci) r = r.toLowerCase();
+        if (o.kana) r = r.replace(/[\u3041-\u3096]/g, c => String.fromCharCode(c.charCodeAt(0) + 96));
+        return r;
+      }
+      function clr(cls) { document.querySelectorAll('mark.' + cls).forEach(m => { const p = m.parentNode; if (p) { p.replaceChild(document.createTextNode(m.textContent), m); p.normalize(); } }); }
+      // 다중검색용: 모든 oy-search-hl-* 클래스 일괄 제거
+      function clrAllSearch() {
+        document.querySelectorAll('mark[class*="oy-search-hl"]').forEach(m => {
+          const p = m.parentNode; if (p) { p.replaceChild(document.createTextNode(m.textContent), m); p.normalize(); }
+        });
+      }
+      // Build normalized string AND a posMap[normIdx]=flatIdx for cross-<br> matching
+      function normWithMap(text, o) {
+        let chars = text.split('').map((c, i) => ({ c, i }));
+        // 줄바꿈 옵션 ON: \n / \r 완전 제거 (zero-width). CJK 「<br>」 분리 매칭
+        if (o.brk) {
+          chars = chars.filter(ch => ch.c !== '\n' && ch.c !== '\r');
+        }
+        if (o.fw) chars = chars.map(ch => { const code = ch.c.charCodeAt(0); if (code >= 0xFF01 && code <= 0xFF5E) return { c: String.fromCharCode(code - 65248), i: ch.i }; if (ch.c === '\u3000') return { c: ' ', i: ch.i }; return ch; });
+        // 공백 옵션 ON: 모든 공백/zero-width 완전 제거 (CJK 무공백 표기 매칭)
+        if (o.sp) {
+          chars = chars.filter(ch => !/[\s\u00A0\u3000\u200B-\u200D\uFEFF]/.test(ch.c));
+        }
+        if (o.ci) chars = chars.map(ch => ({ c: ch.c.toLowerCase(), i: ch.i }));
+        if (o.kana) chars = chars.map(ch => { const code = ch.c.charCodeAt(0); return (code >= 0x3041 && code <= 0x3096) ? { c: String.fromCharCode(code + 96), i: ch.i } : ch; });
+        return { s: chars.map(ch => ch.c).join(''), m: chars.map(ch => ch.i) };
+      }
+      // Block-level tags whose boundaries should act as line breaks in flat string
+      const BLOCK_TAGS = new Set(['BR', 'P', 'DIV', 'LI', 'UL', 'OL', 'TR', 'TD', 'TH', 'H1', 'H2', 'H3', 'H4', 'H5', 'H6', 'BLOCKQUOTE', 'SECTION', 'ARTICLE', 'HEADER', 'FOOTER', 'NAV', 'ASIDE', 'MAIN', 'FIGURE', 'FIGCAPTION', 'HR', 'PRE', 'TABLE']);
+      // Walk DOM recursively. Inserts '\n' separator on entering AND leaving block-level elements.
+      // Existing oy-* mark text is included as normal text (since search/korean clears all marks first).
+      function buildFlat(root) {
+        const items = [];
+        let flat = '';
+        function ensureSep() {
+          if (flat.length > 0 && flat[flat.length - 1] !== '\n') {
+            items.push({ type: 'br', flatStart: flat.length });
+            flat += '\n';
+          }
+        }
+        function walk(node) {
+          if (node.nodeType === Node.TEXT_NODE) {
+            items.push({ type: 'text', node: node, text: node.textContent, flatStart: flat.length });
+            flat += node.textContent;
+          } else if (node.nodeType === Node.ELEMENT_NODE) {
+            const tag = node.tagName;
+            if (tag === 'SCRIPT' || tag === 'STYLE' || tag === 'NOSCRIPT') return;
+            const isBlock = BLOCK_TAGS.has(tag);
+            if (isBlock) ensureSep();
+            if (tag === 'BR' || tag === 'HR') return;
+            for (let i = 0; i < node.childNodes.length; i++) walk(node.childNodes[i]);
+            if (isBlock) ensureSep();
+          }
+        }
+        walk(root);
+        return { items: items, flat: flat };
+      }
+      // flat → 사람이 보기 좋은 1줄 (snippet) 변환 — buildFlat 결과 재사용용
+      function flatToSnippet(flat) { return flat.replace(/\n/g, ' ').replace(/\s+/g, ' ').trim(); }
+      // Block-aware highlight: finds matches spanning text nodes separated by <br> or block-element boundaries
+      function hl(el, q, cls, opts) {
+        if (!q) return 0;
+        const { items, flat } = buildFlat(el);
+        // Normalize flat + get position map
+        const { s: normFlat, m: posMap } = opts ? normWithMap(flat, opts) : { s: flat, m: flat.split('').map((_, i) => i) };
+        const normQ = opts ? norm(q, opts) : q;
+        const normFL = normFlat.toLowerCase(), normQL = normQ.toLowerCase();
+        // Find all matches in normalized flat string
+        const matches = []; let idx = 0;
+        while (true) {
+          const mi = normFL.indexOf(normQL, idx);
+          if (mi === -1) break;
+          const fs = posMap[mi];
+          const lastNi = mi + normQL.length - 1;
+          const fe = (lastNi < posMap.length ? posMap[lastNi] : posMap[posMap.length - 1]) + 1;
+          matches.push({ fs, fe }); idx = mi + 1;
+        }
+        if (!matches.length) return 0;
+        // Map match flat-positions back to text-node character ranges
+        const hlMap = new Map();
+        matches.forEach(({ fs, fe }) => {
+          items.forEach(item => {
+            if (item.type !== 'text') return;
+            const ns = item.flatStart, ne = ns + item.text.length;
+            const os = Math.max(fs, ns), oe = Math.min(fe, ne);
+            if (os < oe) { const arr = hlMap.get(item.node) || []; arr.push({ s: os - ns, e: oe - ns }); hlMap.set(item.node, arr); }
+          });
+        });
+        // Apply highlights to each text node
+        let cnt = 0;
+        hlMap.forEach((ranges, node) => {
+          ranges.sort((a, b) => a.s - b.s);
+          const merged = [];
+          ranges.forEach(r => { if (merged.length && r.s <= merged[merged.length - 1].e) merged[merged.length - 1].e = Math.max(merged[merged.length - 1].e, r.e); else merged.push({ ...r }); });
+          cnt += merged.length;
+          const text = node.textContent;
+          const f = document.createDocumentFragment(); let last = 0;
+          merged.forEach(r => {
+            if (r.s > last) f.appendChild(document.createTextNode(text.slice(last, r.s)));
+            const mk = document.createElement('mark'); mk.className = cls; mk.textContent = text.slice(r.s, r.e); f.appendChild(mk);
+            last = r.e;
+          });
+          if (last < text.length) f.appendChild(document.createTextNode(text.slice(last)));
+          if (node.parentNode) node.parentNode.replaceChild(f, node);
+        });
+        return cnt;
+      }
+      // Block-aware plain text (treats <br> AND block-level boundaries as space)
+      function blockText(el) {
+        return buildFlat(el).flat.replace(/\n/g, ' ').replace(/\s+/g, ' ').trim();
+      }
+      function _emitScroll() { parent.postMessage({ t: 'scroll', top: window.scrollY, h: document.documentElement.scrollHeight, c: window.innerHeight }, '*'); }
+      let _raf; window.addEventListener('scroll', () => { if (_raf) return; _raf = requestAnimationFrame(() => { _emitScroll(); _raf = null; }); });
+      // 초기 scroll 상태 송신 — 새 파일 로드 시 부모의 iframeScroll가 stale 값을 갖지 않도록 즉시 + 이미지 로드 후 재송신
+      _emitScroll();
+      if (document.readyState === 'complete') { setTimeout(_emitScroll, 0); setTimeout(_emitScroll, 250); }
+      else window.addEventListener('load', () => { _emitScroll(); setTimeout(_emitScroll, 200); setTimeout(_emitScroll, 800); });
+      // 이미지/폰트 등으로 인한 늦은 height 변화 대응
+      if (window.ResizeObserver) {
+        let _roT; const _ro = new ResizeObserver(() => { if (_roT) return; _roT = setTimeout(() => { _emitScroll(); _roT = null; }, 120); });
+        try { _ro.observe(document.documentElement); } catch (e) {}
+      }
+      document.addEventListener('keydown', e => { parent.postMessage({ t: 'key', key: e.key, code: e.code, ctrl: e.ctrlKey, shift: e.shiftKey, alt: e.altKey, meta: e.metaKey }, '*'); });
+      document.addEventListener('wheel', e => { if (e.shiftKey) { e.preventDefault(); parent.postMessage({ t: 'syncWheel', dy: e.deltaY }, '*'); } }, { passive: false });
+      window.addEventListener('message', e => {
+        const m = e.data; if (!m || !m.t) return;
+        if (m.t === 'setScroll') window.scrollTo(0, m.top);
+        if (m.t === 'scrollBy') window.scrollBy({ top: m.dy });
+        if (m.t === 'search') {
+          // 다중검색 지원: m.queries = [{q, cls, idx}], 단일검색은 m.q + m.cls(생략시 'oy-search-hl')
+          clrAllSearch(); clr('oy-korean-hl');
+          const queries = m.queries && m.queries.length ? m.queries
+            : (m.q ? [{ q: m.q, cls: m.cls || 'oy-search-hl', idx: 0 }] : []);
+          const res = [];
+          if (queries.length) {
+            document.querySelectorAll('.text-info').forEach((b, i) => {
+              // snippet은 hl() DOM 변형 전에 1회만 계산 (성능: 블록당 buildFlat 1회만)
+              const snippet = flatToSnippet(buildFlat(b).flat).slice(0, 50);
+              const top = b.getBoundingClientRect().top + window.scrollY;
+              queries.forEach(qq => {
+                if (!qq.q) return;
+                const c = hl(b, qq.q, qq.cls, m.opts);
+                if (c > 0) res.push({ i: i, sn: snippet, count: c, top: top, qIdx: qq.idx });
+              });
+            });
+          }
+          parent.postMessage({ t: 'searchR', id: m.id, r: res }, '*');
+        }
+        if (m.t === 'korean') {
+          clr('oy-korean-hl'); clrAllSearch();
+          const res = [];
+          document.querySelectorAll('.text-info').forEach((b, i) => {
+            // 블록당 1회 buildFlat → korean regex + hl 모두에 재사용
+            const flat = buildFlat(b).flat;
+            const text = flatToSnippet(flat);
+            const ms = text.match(KO);
+            if (!ms) return;
+            const top = b.getBoundingClientRect().top + window.scrollY;
+            ms.forEach(mt => {
+              hl(b, mt, 'oy-korean-hl', null);
+              res.push({ i: i, text: mt, top: top });
+            });
+          });
+          parent.postMessage({ t: 'koreanR', id: m.id, r: res }, '*');
+        }
+        if (m.t === 'clear') { clrAllSearch(); clr('oy-korean-hl'); }
+        if (m.t === 'extract') { const res = []; document.querySelectorAll('.text-info').forEach((b, i) => { const t = blockText(b); if (t) res.push({ i: i, text: t }); }); parent.postMessage({ t: 'extractR', id: m.id, r: res }, '*'); }
+        if (m.t === 'goBlock') { const bs = document.querySelectorAll('.text-info'); if (bs[m.i]) { const r = bs[m.i].getBoundingClientRect(); window.scrollTo({ top: window.scrollY + r.top - 100, behavior: 'smooth' }); } }
+      });
+      // drag/drop: bridge 내부에서 파일 드롭을 parent로 전달 (내부 이미지/텍스트 드래그 제외)
+      // 핵심 수정: ping 자동 만료(2초) + parent의 stopDrag 메시지 수신 시 즉시 정지
+      // → drop이 parent shield에서 발생해도 iframe ping이 살아남아 overlay를 다시 켜는 stuck 버그 해결
+      let _dragPing = null, _isFileDrag = false, _pingExpiry = 0;
+      function _stopDragPing(silent) {
+        _isFileDrag = false;
+        if (_dragPing) { clearInterval(_dragPing); _dragPing = null; }
+        if (!silent) parent.postMessage({ t: 'iframeDrag', active: false }, '*');
+      }
+      function _hasFileType(e) {
+        return e.dataTransfer && Array.from(e.dataTransfer.types || []).includes('Files');
+      }
+      document.addEventListener('dragenter', e => {
+        if (!_hasFileType(e)) return; // 내부 이미지/텍스트 드래그 무시
+        _isFileDrag = true;
+        _pingExpiry = (performance.now ? performance.now() : Date.now()) + 2000;
+        parent.postMessage({ t: 'iframeDrag', active: true }, '*');
+        if (_dragPing) clearInterval(_dragPing);
+        _dragPing = setInterval(() => {
+          // 2초 자동 만료: 어떤 상황에서도 stuck 방지
+          if ((performance.now ? performance.now() : Date.now()) > _pingExpiry) {
+            _stopDragPing(false);
+            return;
+          }
+          parent.postMessage({ t: 'iframeDrag', active: true }, '*');
+        }, 100);
+      });
+      document.addEventListener('dragleave', e => {
+        if (!_isFileDrag) return;
+        if (!e.relatedTarget) _stopDragPing(false);
+      });
+      document.addEventListener('dragover', e => {
+        if (_hasFileType(e)) {
+          e.preventDefault();
+          // ping이 살아있다면 만료시간 연장
+          if (_isFileDrag) _pingExpiry = (performance.now ? performance.now() : Date.now()) + 2000;
+        }
+      });
+      document.addEventListener('drop', e => {
+        // 항상 preventDefault: 인식 실패 시 Chrome이 파일을 새 탭으로 여는 것 차단
+        e.preventDefault();
+        e.stopPropagation();
+        _stopDragPing(true);
+        const file = e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0];
+        if (file && file.name.match(/\.html?$/i)) {
+          const r = new FileReader();
+          r.onload = ev => parent.postMessage({ t: 'fileLoad', name: file.name, html: ev.target.result }, '*');
+          r.readAsText(file, 'UTF-8');
+        }
+        // 마지막에 active:false 송신 (stopDrag broadcast와 idempotent)
+        parent.postMessage({ t: 'iframeDrag', active: false }, '*');
+      });
+      // OS 레벨 dragend (브라우저별 fallback)
+      document.addEventListener('dragend', () => _stopDragPing(false));
+      window.addEventListener('blur', () => _stopDragPing(false));
+      // parent의 stopDrag broadcast 수신 → ping 즉시 정지 (stuck 핵심 해결)
+      window.addEventListener('message', e => {
+        if (e.data && e.data.t === 'stopDrag') _stopDragPing(true);
+      });
+    };
+    const BRIDGE_SCRIPT = '<' + 'script>(' + _bridgeFn.toString() + ')();</' + 'script>';
+
+    function stripExt(name) { return (name || '').replace(/\.html?$/i, ''); }
+    function loadHTML(html, lang, opts) {
+      const iframe = $(lang + 'Frame'), label = $(lang + 'Label');
+      const drop = $(lang + 'Drop'); // KR은 drop 영역 없음
+      const isKr = lang === 'kr';
+      // KR도 hidden=false (visibility:hidden으로 layout만 유지) — 끊김없는 즉시 표시 보장
+      iframe.hidden = false;
+      if (drop) drop.hidden = true;
+      loadedHTML[lang] = html;
+      const markCss = [
+        'mark.oy-search-hl{background:rgba(255,200,0,0.5)!important}',  /* legacy 단일검색 (노랑) */
+        'mark.oy-search-hl-0{background:rgba(255,200,0,0.5)!important}', /* 노랑 */
+        'mark.oy-search-hl-1{background:rgba(59,130,246,0.45)!important;color:#fff!important}', /* 파랑 */
+        'mark.oy-search-hl-2{background:rgba(16,185,129,0.45)!important;color:#fff!important}', /* 초록 */
+        'mark.oy-search-hl-3{background:rgba(168,85,247,0.45)!important;color:#fff!important}', /* 보라 */
+        'mark.oy-search-hl-4{background:rgba(249,115,22,0.5)!important;color:#fff!important}',  /* 주황 */
+        'mark.oy-search-hl-5{background:rgba(236,72,153,0.5)!important;color:#fff!important}',  /* 핑크 */
+        'mark.oy-search-hl-6{background:rgba(6,182,212,0.5)!important;color:#fff!important}',   /* 청록 */
+        'mark.oy-search-hl-7{background:rgba(132,204,22,0.55)!important}',                       /* 라임 */
+        'mark.oy-search-hl-8{background:rgba(239,68,68,0.55)!important;color:#fff!important}',  /* 빨강 */
+        'mark.oy-search-hl-9{background:rgba(31,41,55,0.85)!important;color:#fff!important}',    /* 검정 */
+        'mark[class*="oy-search-hl"]{padding:0!important;margin:0!important;border-radius:2px!important}',
+        'mark.oy-korean-hl{background:rgba(255,71,87,0.45)!important;color:inherit!important;padding:0!important;margin:0!important;border-radius:2px!important}',
+      ].join('');
+      // KR 원본은 raw <img>만 있어서 자연 크기로 노출 → max-width:100%로 패널 안에 맞추고, 작으면 중앙정렬+흰여백 (업스케일 X)
+      const krImgCss = isKr ? 'img{max-width:100%!important;height:auto!important;display:block!important;margin:0 auto!important}body{text-align:center!important}' : '';
+      const css = '<style>body{margin:0!important;padding:0!important;background:#fff!important}' + markCss + krImgCss + '::-webkit-scrollbar{display:none!important}html{scrollbar-width:none!important}<\/style>';
+      const blob = new Blob([css + html + BRIDGE_SCRIPT], { type: 'text/html;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      // 새 파일 로드 직전: stale scroll 상태와 미니맵 마커 정리 (브리지의 초기 emit이 도착하기 전 보호)
+      iframeScroll[lang] = { top: 0, h: 1, c: 1 };
+      const _mm = $(lang + 'Minimap'); if (_mm) _mm.querySelectorAll('.minimap-mark').forEach(m => m.remove());
+      const _th = $(lang + 'Thumb'); if (_th) _th.hidden = true;
+      iframe.src = url;
+      if (label) label.classList.add('loaded');
+      const isReload = opts && opts.reload;
+      iframe.onload = () => {
+        URL.revokeObjectURL(url);
+        if (!isKr) applyIframeScale(iframe); // KR은 repositionKr()에서 직접 스케일 처리
+        filesLoaded[lang] = true;
+        toast(lang.toUpperCase() + (isReload ? ' 새로고침 완료' : ' 로드 완료'));
+        if (isKr) {
+          // KR 원본 로드 → 비교 버튼 활성화. 자동 한국어 탐지는 실행 안 함 (텍스트 없는 이미지 페이지)
+          const krBtn = $('krOverlayBtn'); if (krBtn) krBtn.disabled = false;
+        } else if (!isReload && typeof detectKorean === 'function') {
+          // EN/JA: 새로 파일이 로드될 때마다 한국어 탐지 1회 자동 실행 (새로고침 시는 기존 결과 유지)
+          setTimeout(() => detectKorean({ silent: true }), 250);
+        }
+      };
+    }
+    function setFilename(lang, name) {
+      loadedFilename[lang] = name || null;
+      const el = $(lang + 'Filename');
+      if (el) el.textContent = stripExt(name);
+    }
+    function reloadAll() {
+      let cnt = 0;
+      ['en', 'ja', 'kr'].forEach(l => {
+        if (loadedHTML[l]) { loadHTML(loadedHTML[l], l, { reload: true }); cnt++; }
+      });
+      if (cnt === 0) toast('새로고침할 파일이 없습니다');
+      else toast('양쪽 새로고침 중...');
+    }
+    $('reloadBtn').onclick = reloadAll;
+
+    /* postMessage 기반 통신 */
+    const iframeScroll = { en: { top: 0, h: 1, c: 1 }, ja: { top: 0, h: 1, c: 1 }, kr: { top: 0, h: 1, c: 1 } };
+    // Directional lock: when we send setScroll to a side, ignore its echo for 150ms
+    const scrollLock = { en: 0, ja: 0, kr: 0 };
+    const pendingCB = {};
+    let msgId = 0;
+    function sendMsg(lang, msg) {
+      return new Promise(resolve => {
+        const id = ++msgId; msg.id = id;
+        pendingCB[id] = resolve;
+        $(lang + 'Frame').contentWindow?.postMessage(msg, '*');
+        setTimeout(() => { if (pendingCB[id]) { resolve(null); delete pendingCB[id]; } }, 3000);
+      });
+    }
+    window.addEventListener('message', e => {
+      const m = e.data; if (!m || !m.t) return;
+      const lang =
+        e.source === $('enFrame').contentWindow ? 'en' :
+        e.source === $('jaFrame').contentWindow ? 'ja' :
+        e.source === $('krFrame').contentWindow ? 'kr' : null;
+      if (!lang) return;
+      if (m.t === 'scroll') {
+        iframeScroll[lang] = { top: m.top, h: m.h, c: m.c };
+        // Minimap thumb은 EN/JA만 (KR은 미니맵 없음)
+        if (lang !== 'kr') updateThumb(lang, m.top, m.h, m.c);
+        // KR은 EN↔JA 양방향 동기 대상에서 제외 — 활성 패널의 propagation으로만 따라감
+        if (lang === 'kr') return;
+        // If this side is locked (scroll was triggered by our setScroll), skip propagation
+        if ($('syncScroll').checked && performance.now() >= scrollLock[lang]) {
+          const oth = lang === 'en' ? 'ja' : 'en';
+          const pct = m.top / Math.max(1, m.h - m.c);
+          const os = iframeScroll[oth];
+          const targetTop = pct * Math.max(0, os.h - os.c);
+          // Lock the other side for 150ms so its echo doesn't bounce back
+          scrollLock[oth] = performance.now() + 150;
+          $(oth + 'Frame').contentWindow?.postMessage({ t: 'setScroll', top: targetTop }, '*');
+          // Optimistically update other side's thumb right away
+          updateThumb(oth, targetTop, os.h, os.c);
+        }
+        // KR 오버레이가 활성 상태라면, 활성 패널의 스크롤을 KR에도 동기화
+        if (typeof krSyncFrom === 'function') krSyncFrom(lang, m);
+      }
+      if (m.t === 'syncWheel') {
+        ['en', 'ja'].forEach(l => $(l + 'Frame').contentWindow?.postMessage({ t: 'scrollBy', dy: m.dy }, '*'));
+      }
+      if (m.t === 'key') {
+        document.dispatchEvent(new KeyboardEvent('keydown', { key: m.key, code: m.code, ctrlKey: m.ctrl, shiftKey: m.shift, altKey: m.alt, metaKey: m.meta, bubbles: true }));
+      }
+      if (m.t === 'iframeDrag') {
+        if (m.active) setDragOver(true);
+        else setDragOver(false);
+        return;
+      }
+      if (m.t === 'fileLoad') {
+        // 드롭된 iframe의 lang 사용 (e.source로 판별)
+        const targetLang = lang; // lang is already resolved from e.source above
+        const label = $(targetLang + 'Label');
+        label.querySelector('span').textContent = '\u2705 ' + m.name.slice(0, 20) + (m.name.length > 20 ? '\u2026' : '');
+        setFilename(targetLang, m.name);
+        loadHTML(m.html, targetLang);
+        return;
+      }
+      if (pendingCB[m.id]) { pendingCB[m.id](m); delete pendingCB[m.id]; }
+    });
+    function setupSync() { }
+    function setupIframeKeyboard() { }
+
+    /* Custom scrollbar thumb update */
+    function updateThumb(lang, top, h, c) {
+      const thumb = $(lang + 'Thumb');
+      const minimap = $(lang + 'Minimap');
+      if (!thumb || !minimap) return;
+      const maxScroll = Math.max(1, h - c);
+      if (maxScroll <= 0) { thumb.hidden = true; return; }
+      thumb.hidden = false;
+      const trackH = minimap.clientHeight;
+      const thumbH = Math.max(24, Math.min(trackH * 0.9, (c / h) * trackH));
+      const thumbTop = (top / maxScroll) * (trackH - thumbH);
+      thumb.style.height = thumbH + 'px';
+      thumb.style.top = thumbTop + 'px';
+    }
+
+    /* Minimap drag-to-scroll + click-to-jump */
+    ['en', 'ja'].forEach(lang => {
+      const minimap = $(lang + 'Minimap');
+      const thumb = $(lang + 'Thumb');
+
+      // Click on minimap track (not thumb) → jump
+      minimap.addEventListener('mousedown', e => {
+        if (e.target === thumb) return; // handled by thumb drag
+        const rect = minimap.getBoundingClientRect();
+        const pct = (e.clientY - rect.top) / rect.height;
+        const s = iframeScroll[lang];
+        const newTop = pct * Math.max(0, s.h - s.c);
+        $(lang + 'Frame').contentWindow?.postMessage({ t: 'setScroll', top: newTop }, '*');
+        e.preventDefault();
+      });
+
+      // Drag thumb
+      thumb.addEventListener('mousedown', e => {
+        e.preventDefault();
+        e.stopPropagation();
+        thumb.classList.add('dragging');
+        const rect = minimap.getBoundingClientRect();
+        const thumbH = thumb.offsetHeight;
+        const startY = e.clientY;
+        const startTop = parseFloat(thumb.style.top) || 0;
+
+        const onMove = mv => {
+          const delta = mv.clientY - startY;
+          const trackH = rect.height;
+          const newThumbTop = Math.max(0, Math.min(trackH - thumbH, startTop + delta));
+          const s = iframeScroll[lang];
+          const pct = newThumbTop / Math.max(1, trackH - thumbH);
+          const newScrollTop = pct * Math.max(0, s.h - s.c);
+          $(lang + 'Frame').contentWindow?.postMessage({ t: 'setScroll', top: newScrollTop }, '*');
+        };
+        const onUp = () => {
+          thumb.classList.remove('dragging');
+          document.removeEventListener('mousemove', onMove);
+          document.removeEventListener('mouseup', onUp);
+        };
+        document.addEventListener('mousemove', onMove);
+        document.addEventListener('mouseup', onUp);
+      });
+
+      // Wheel on minimap → scroll iframe
+      minimap.addEventListener('wheel', e => {
+        e.preventDefault();
+        $(lang + 'Frame').contentWindow?.postMessage({ t: 'scrollBy', dy: e.deltaY }, '*');
+      }, { passive: false });
+    });
+
+    /* Dead-zone wheel forwarding: entire iframe-container → iframe */
+    ['en', 'ja'].forEach(lang => {
+      const container = $(lang + 'Container');
+      container.addEventListener('wheel', e => {
+        // iframe captures its own wheel; this fires only for dead zones
+        if (e.shiftKey) {
+          e.preventDefault();
+          ['en', 'ja'].forEach(l => $(l + 'Frame').contentWindow?.postMessage({ t: 'scrollBy', dy: e.deltaY }, '*'));
+        } else {
+          e.preventDefault();
+          $(lang + 'Frame').contentWindow?.postMessage({ t: 'scrollBy', dy: e.deltaY }, '*');
+        }
+      }, { passive: false });
+    });
+
+    /* Panel keyboard: click panel → arrow keys forward to iframe */
+    ['en', 'ja'].forEach(lang => {
+      const panel = $(lang + 'Panel');
+      panel.setAttribute('tabindex', '-1');
+      panel.style.outline = 'none';
+      panel.addEventListener('click', e => {
+        if (e.target.tagName !== 'BUTTON' && e.target.tagName !== 'INPUT') panel.focus();
+      });
+      panel.addEventListener('keydown', e => {
+        const scrollKeys = { ArrowDown: 80, ArrowUp: -80, PageDown: 500, PageUp: -500 };
+        if (scrollKeys[e.key] !== undefined) {
+          e.preventDefault();
+          $(lang + 'Frame').contentWindow?.postMessage({ t: 'scrollBy', dy: scrollKeys[e.key] }, '*');
+        }
+      });
+    });
+    function handleFile(file, lang) {
+      if (!file || !file.name.match(/\.html?$/i)) return toast('HTML 파일만 선택 가능합니다');
+      const label = $(lang + 'Label');
+      label.querySelector('span').textContent = '✅ ' + file.name.slice(0, 20) + (file.name.length > 20 ? '…' : '');
+      setFilename(lang, file.name);
+      const r = new FileReader();
+      r.onload = e => loadHTML(e.target.result, lang);
+      r.readAsText(file, 'UTF-8');
+    }
+    $('enFile').onchange = function () { handleFile(this.files[0], 'en'); this.value = ''; };
+    $('jaFile').onchange = function () { handleFile(this.files[0], 'ja'); this.value = ''; };
+    $('krFile').onchange = function () { handleFile(this.files[0], 'kr'); this.value = ''; };
+
+    /* Prevent native file dialog from opening when files are dropped on inputs */
+    ['enFile', 'jaFile'].forEach(id => {
+      $(id).addEventListener('drop', e => { e.preventDefault(); e.stopPropagation(); });
+    });
+    ['enLabel', 'jaLabel'].forEach(id => {
+      $(id).addEventListener('drop', e => { e.preventDefault(); e.stopPropagation(); });
+      $(id).addEventListener('dragover', e => { e.preventDefault(); e.stopPropagation(); });
+    });
+
+    /* GLOBAL DRAG & DROP (Auto Detect) — document 레벨에서 캡처
+       치명적 stuck 버그 수정:
+       - heartbeat: 마지막 dragover/iframeDrag 활성 시각을 기록 → 700ms 무활동 시 강제 OFF
+       - drop 시 양쪽 iframe에 stopDrag broadcast → iframe ping 즉시 정지 (echo 차단)
+       - dragend / window blur / Escape 키 → 추가 안전장치 */
+    const mainArea = $('mainArea');
+    let dragHeartbeat = 0;
+    let dragHeartbeatTimer = null;
+
+    const isFileDrag = e => e.dataTransfer && Array.from(e.dataTransfer.types || []).includes('Files');
+
+    function broadcastStopDrag() {
+      ['en', 'ja'].forEach(l => {
+        const f = $(l + 'Frame');
+        if (f && f.contentWindow) f.contentWindow.postMessage({ t: 'stopDrag' }, '*');
+      });
+    }
+
+    function setDragOver(active) {
+      const had = document.body.classList.contains('global-drag-over');
+      if (active) {
+        dragHeartbeat = Date.now();
+        document.body.classList.add('global-drag-over');
+        mainArea.classList.add('global-drag-over');
+        if (!dragHeartbeatTimer) {
+          // 700ms 동안 활동 없으면 강제 OFF (어떤 stuck 상황에서도 7번의 시도로 자동 복구)
+          dragHeartbeatTimer = setInterval(() => {
+            if (Date.now() - dragHeartbeat > 700) setDragOver(false);
+          }, 200);
+        }
+      } else {
+        document.body.classList.remove('global-drag-over');
+        mainArea.classList.remove('global-drag-over');
+        if (dragHeartbeatTimer) { clearInterval(dragHeartbeatTimer); dragHeartbeatTimer = null; }
+        if (had) broadcastStopDrag();
+      }
+    }
+
+    document.addEventListener('dragenter', e => {
+      if (!isFileDrag(e)) return;
+      e.preventDefault();
+      setDragOver(true);
+    });
+    document.addEventListener('dragover', e => {
+      if (!isFileDrag(e)) return;
+      e.preventDefault();
+      dragHeartbeat = Date.now();
+      // overlay가 떠있지 않다면 켜기 (recovery 후 재드래그 등)
+      if (!document.body.classList.contains('global-drag-over')) setDragOver(true);
+    });
+    document.addEventListener('dragleave', e => {
+      if (!isFileDrag(e)) return;
+      // 화면 밖으로 나가는 경우만 처리 (iframe 경계는 무시 — heartbeat가 처리)
+      if (e.clientX <= 0 || e.clientY <= 0 || e.clientX >= window.innerWidth || e.clientY >= window.innerHeight) {
+        setDragOver(false);
+      }
+    });
+    document.addEventListener('drop', e => {
+      e.preventDefault();
+      e.stopPropagation();
+      setDragOver(false);
+      if (!e.dataTransfer || !e.dataTransfer.files.length) return;
+      const files = Array.from(e.dataTransfer.files).filter(f => f.name.match(/\.html?$/i));
+      if (files.length === 0) return toast('HTML 파일만 지원됩니다');
+
+      const detectLang = n => {
+        const t = n.toLowerCase();
+        if (/_en[_.]/.test(t) || t.endsWith('_en.html')) return 'en';
+        if (/_ja[_.]/.test(t) || t.endsWith('_ja.html')) return 'ja';
+        // KR 원본: _origin_ 또는 _kr_ (또는 .html 직전)
+        if (/_origin[_.]/.test(t) || /_kr[_.]/.test(t) || t.endsWith('_origin.html') || t.endsWith('_kr.html')) return 'kr';
+        return null;
+      };
+
+      if (files.length >= 2) {
+        let en = null, ja = null, kr = null;
+        files.forEach(f => {
+          const l = detectLang(f.name);
+          if (l === 'en') en = f;
+          else if (l === 'ja') ja = f;
+          else if (l === 'kr') kr = f;
+        });
+        const placed = [];
+        if (en) { handleFile(en, 'en'); placed.push('EN'); }
+        if (ja) { handleFile(ja, 'ja'); placed.push('JA'); }
+        if (kr) { handleFile(kr, 'kr'); placed.push('KR'); }
+        if (placed.length) return toast(placed.join('/') + ' 파일 자동 배치 완료');
+        handleFile(files[0], 'en'); handleFile(files[1], 'ja'); return toast('파일명 감지 실패 → 순서대로 배치');
+      }
+      const l = detectLang(files[0].name);
+      if (l) { handleFile(files[0], l); toast(l.toUpperCase() + ' 파일 감지 완료'); }
+      else toast('파일명에서 언어를 감지할 수 없습니다');
+    });
+    // 추가 안전장치: dragend(브라우저), window blur(alt-tab), Escape 키 → 강제 해제
+    document.addEventListener('dragend', () => setDragOver(false));
+    window.addEventListener('blur', () => setDragOver(false));
+    document.addEventListener('keydown', e => {
+      if (e.key === 'Escape' && document.body.classList.contains('global-drag-over')) setDragOver(false);
+    });
+
+    /* RESIZE */
+    (function () {
+      const h = $('resizeHandle'), sp = $('splitView');
+      let drag = false, sx, sw;
+
+      h.addEventListener('mousedown', e => {
+        if (!sp.classList.contains('resize-enabled')) return;
+        drag = true; sx = e.clientX; h.classList.add('active');
+        const p = sp.querySelectorAll('.panel');
+        sw = [p[0].offsetWidth, p[1].offsetWidth];
+        e.preventDefault();
+      });
+      document.addEventListener('mousemove', e => {
+        if (!drag) return;
+        const dx = e.clientX - sx, p = sp.querySelectorAll('.panel');
+        const t = sw[0] + sw[1], w = Math.max(150, Math.min(t - 150, sw[0] + dx));
+        p[0].style.flex = 'none'; p[0].style.width = w + 'px';
+        p[1].style.flex = 'none'; p[1].style.width = (t - w) + 'px';
+      });
+      document.addEventListener('mouseup', () => {
+        drag = false; h.classList.remove('active');
+        if (krActive) repositionKr(); // 패널 비율 변경 후 KR 위치/스케일 재계산
+      });
+
+      // 1:1 리셋 — 인라인 width 제거하고 flex:1로 복원
+      function resetPanels() {
+        sp.querySelectorAll('.panel').forEach(p => { p.style.flex = ''; p.style.width = ''; });
+      }
+
+      const btn = $('resizerToggleBtn');
+      let resizerOn = false; // 기본 OFF
+      btn.onclick = () => {
+        resizerOn = !resizerOn;
+        sp.classList.toggle('resize-enabled', resizerOn);
+        btn.classList.toggle('resizer-on', resizerOn);
+        btn.title = resizerOn ? '패널 너비 조절 ON — 클릭해 끄기 (1:1 고정)' : '패널 너비 조절 OFF — 클릭해 켜기';
+        if (!resizerOn) { drag = false; resetPanels(); toast('↔ 너비조절 OFF — 1:1 비율 고정'); }
+        else toast('↔ 너비조절 ON — 구분선을 드래그하세요');
+      };
+    })();
+
+    /* KR 원본 비교 — hold-to-show + sticky 토글 + 마우스 추적
+       핵심: krFrame은 사전 렌더되어 항상 DOM에 존재. CSS left/width만 변경해 패널을 옮김 (재로드 없음). */
+    let lastHoveredPanel = 'en';
+    let krActive = false;       // hold 또는 sticky로 활성 상태
+    let krSticky = false;       // 버튼 클릭으로 켠 모드 (떼도 유지)
+    let krHoldKey = false;      // ` 키 누르고 있는 동안
+    let krCurrentSide = null;   // 현재 KR이 표시되는 쪽 ('en' or 'ja')
+    let krLastToggleTs = 0;     // 연속 토글 방지용 타임스탬프
+
+    $('enPanel').addEventListener('mouseenter', () => { lastHoveredPanel = 'en'; if (krActive) repositionKr(); });
+    $('jaPanel').addEventListener('mouseenter', () => { lastHoveredPanel = 'ja'; if (krActive) repositionKr(); });
+
+    function repositionKr() {
+      // 활성 패널의 반대편에 KR 표시
+      const targetSide = lastHoveredPanel === 'en' ? 'ja' : 'en';
+      const target = $(targetSide + 'Panel');
+      const splitView = $('splitView');
+      if (!target || !splitView) return;
+      // iframe-container 영역에 정확히 매칭 — panel-header는 자동 노출, 폭/높이 모두 패널과 일치
+      const targetContainer = target.querySelector('.iframe-container');
+      if (!targetContainer) return;
+      const tcr = targetContainer.getBoundingClientRect();
+      const sr = splitView.getBoundingClientRect();
+      const krEl = $('krFrame'), label = $('krOverlayLabel');
+      krEl.style.top = (tcr.top - sr.top) + 'px';
+      krEl.style.left = (tcr.left - sr.left) + 'px';
+      krEl.style.width = tcr.width + 'px';
+      krEl.style.height = tcr.height + 'px';
+      // transform 스케일 제거 — 내부 CSS(max-width:100%, margin:0 auto)가 이미지 fitting 처리
+      krEl.style.transform = '';
+      krEl.style.transformOrigin = '';
+      label.style.top = (tcr.top - sr.top + 8) + 'px';
+      label.style.left = (tcr.left - sr.left + 12) + 'px';
+      label.textContent = '🇰🇷 원본 ↔ ' + (lastHoveredPanel === 'en' ? '🇺🇸 EN' : '🇯🇵 JA') + ' 동기 비교';
+      krCurrentSide = targetSide;
+      // 활성 패널의 현재 스크롤 위치를 KR로 즉시 동기화
+      const aS = iframeScroll[lastHoveredPanel];
+      const krS = iframeScroll.kr;
+      const pct = aS.top / Math.max(1, aS.h - aS.c);
+      const targetTop = pct * Math.max(0, krS.h - krS.c);
+      $('krFrame').contentWindow?.postMessage({ t: 'setScroll', top: targetTop }, '*');
+    }
+
+    function showKrOverlay() {
+      if (!filesLoaded.kr) {
+        toast('🇰🇷 원본(KR) 파일을 먼저 로드하세요');
+        return false;
+      }
+      krActive = true;
+      // visibility 토글로 layout flash 없이 즉시 표시
+      $('krFrame').classList.add('kr-active');
+      $('krOverlayLabel').classList.add('kr-active');
+      $('krOverlayBtn').classList.add('active');
+      // iframe 포커스 해제 → 부모 문서가 키보드 이벤트 수신 (토글 OFF, ESC 등)
+      $('krFrame').blur();
+      repositionKr();
+      return true;
+    }
+    function hideKrOverlay() {
+      krActive = false; krCurrentSide = null;
+      $('krFrame').classList.remove('kr-active');
+      $('krOverlayLabel').classList.remove('kr-active');
+      $('krOverlayBtn').classList.remove('active');
+    }
+
+    // KR 동기화: 활성 패널이 스크롤될 때 호출됨 (postMessage handler 내부에서)
+    function krSyncFrom(srcLang, m) {
+      if (!krActive || srcLang === 'kr') return;
+      // 활성 측(현재 마우스가 있는 쪽)에서 발생한 스크롤만 KR로 전파
+      if (srcLang !== lastHoveredPanel) return;
+      const krS = iframeScroll.kr;
+      const pct = m.top / Math.max(1, m.h - m.c);
+      const targetTop = pct * Math.max(0, krS.h - krS.c);
+      scrollLock.kr = performance.now() + 150;
+      $('krFrame').contentWindow?.postMessage({ t: 'setScroll', top: targetTop }, '*');
+    }
+
+    // 헤더 KR 버튼 — 클릭으로 sticky 토글
+    $('krOverlayBtn').onclick = () => {
+      if (!filesLoaded.kr) { toast('🇰🇷 원본(KR) 파일을 먼저 로드하세요'); return; }
+      if (krSticky || krActive) {
+        krSticky = false; krHoldKey = false; hideKrOverlay();
+        toast('🇰🇷 원본 비교 OFF');
+      } else {
+        if (showKrOverlay()) { krSticky = true; toast('🇰🇷 원본 비교 ON (sticky) — 다시 누르면 해제'); }
+      }
+    };
+
+    // 단축키: ` 한 번 누르면 ON/OFF 토글 (입력 포커스 시 무시, 600ms 디바운스)
+    document.addEventListener('keydown', e => {
+      if (e.repeat) return;
+      if (e.key !== '`') return;
+      const tag = e.target && e.target.tagName;
+      if (tag === 'INPUT' || tag === 'TEXTAREA' || (e.target && e.target.isContentEditable)) return;
+      e.preventDefault();
+      const now = Date.now();
+      if (now - krLastToggleTs < 600) return; // 연속 깜빡임 방지
+      krLastToggleTs = now;
+      // 토글: 활성 상태면 OFF, 비활성이면 ON (sticky)
+      if (krSticky || krActive) {
+        krSticky = false; krHoldKey = false; hideKrOverlay();
+      } else {
+        if (showKrOverlay()) krSticky = true;
+      }
+    });
+    // 창 리사이즈/패널 비율 변경 시 KR 위치 재계산
+    window.addEventListener('resize', () => { if (krActive) repositionKr(); });
+
+    /* SCROLL SYNC — postMessage 기반 */
+    $('syncNowBtn').onclick = () => {
+      if (!filesLoaded.en || !filesLoaded.ja) return toast('양쪽 파일을 먼저 로드하세요');
+      const eS = iframeScroll.en;
+      const p = eS.top / Math.max(1, eS.h - eS.c);
+      const jS = iframeScroll.ja;
+      scrollLock.ja = performance.now() + 300;
+      $('jaFrame').contentWindow?.postMessage({ t: 'setScroll', top: p * Math.max(0, jS.h - jS.c) }, '*');
+      toast('위치 동기화 완료');
+    };
+
+    /* NORMALIZE & OPTIONS */
+    function getOpts() { return { brk: $('optBreak').checked, fw: $('optFW').checked, sp: $('optSpace').checked, ci: $('optCase').checked, kana: $('optKana').checked } }
+
+    /* MINIMAP */
+    function updateMinimapPM(lang, results, type) {
+      const map = $(lang + 'Minimap');
+      const totalH = iframeScroll[lang].h || 1;
+      // type: 'korean' | 'search' (legacy) | 'search-N' (N=0~4 색 인덱스)
+      let colorClass;
+      if (type === 'korean') colorClass = 'mark-korean';
+      else if (type && type.indexOf('search-') === 0) colorClass = 'mark-search-' + type.slice(7);
+      else colorClass = 'mark-search-0';
+      results.forEach(r => {
+        const pct = (r.top / totalH) * 100;
+        const mark = document.createElement('div');
+        mark.className = 'minimap-mark ' + colorClass;
+        mark.style.top = pct + '%';
+        map.appendChild(mark);
+      });
+    }
+    function clearMinimap() {
+      // innerHTML = '' 하면 mm-thumb까지 지워지므로 marks만 제거
+      ['en', 'ja'].forEach(lang => {
+        $(lang + 'Minimap').querySelectorAll('.minimap-mark').forEach(m => m.remove());
+      });
+    }
+
+    /* KOREAN DETECTION — postMessage */
+    async function detectKorean(opts) {
+      const silent = opts && opts.silent;
+      const allRes = [];
+      clearMinimap();
+      for (const l of ['en', 'ja']) {
+        if (!filesLoaded[l]) continue;
+        const resp = await sendMsg(l, { t: 'korean' });
+        if (resp && resp.r) {
+          resp.r.forEach(r => allRes.push({ lang: l, idx: r.i, text: r.text, top: r.top }));
+          updateMinimapPM(l, resp.r, 'korean');
+        }
+      }
+      ['en', 'ja'].forEach(l => { const c = allRes.filter(r => r.lang === l).length; const el = $(l + 'Badge'); if (c) { el.hidden = false; el.textContent = '\u26a0\ufe0f ' + c + '건' } else el.hidden = true });
+      const c = $('koreanResults'); c.innerHTML = ''; S.errors = S.errors.filter(e => e.type !== 'korean');
+      // 헤더 버튼 텍스트/상태 + 드롭다운 헤더 동기화
+      const _kBtn = $('headerKoreanBtn'), _kBtnText = $('koreanStatusText'), _kStatus = $('koreanDropdownStatus');
+      _kBtn.classList.remove('has-results', 'clean-result');
+      if (allRes.length) {
+        _kBtn.classList.add('has-results');
+        _kBtnText.textContent = '\u26a0\ufe0f ' + allRes.length + '건 발견';
+        _kStatus.textContent = '\u26a0\ufe0f ' + allRes.length + '건 발견 \u2014 클릭해 이동';
+        _kStatus.className = 'korean-dropdown-status warn';
+        allRes.forEach(r => {
+          const d = document.createElement('div'); d.className = 'result-item';
+          d.innerHTML = '<span>\u300c' + r.text + '\u300d</span><span class="lang-tag ' + r.lang + '">' + r.lang.toUpperCase() + '</span>';
+          d.onclick = () => { $(r.lang + 'Frame').contentWindow?.postMessage({ t: 'goBlock', i: r.idx }, '*'); $('koreanDropdown').hidden = true; };
+          c.appendChild(d);
+          S.errors.push({ type: 'korean', lang: r.lang, text: r.text });
+        });
+      } else {
+        _kBtn.classList.add('clean-result');
+        _kBtnText.textContent = '\u2705 한국어 없음';
+        _kStatus.textContent = '\u2705 한국어 없음';
+        _kStatus.className = 'korean-dropdown-status ok';
+      }
+      // 자동 실행(silent)일 때는 한국어 검출 시에만 토스트 (없으면 조용히)
+      if (silent) {
+        if (allRes.length) toast('🇰🇷 한국어 자동 탐지: ' + allRes.length + '건');
+      } else {
+        toast('한국어 검사: ' + allRes.length + '건');
+      }
+    }
+    /* 헤더/사이드바 드롭다운 — 일반화된 토글 + 외부클릭 닫기
+       (한국어 / 텍스트추출 / 단축키 / 검색 히스토리 모두 동일 패턴) */
+    function _toggleHdrDropdown(triggerBtnId, dropdownId) {
+      const btn = $(triggerBtnId), dd = $(dropdownId);
+      if (!btn || !dd) return;
+      btn.onclick = (e) => {
+        e.stopPropagation();
+        const willOpen = dd.hidden;
+        // 다른 모든 hdr-dropdown 닫기 (한 번에 하나만 열려있게)
+        document.querySelectorAll('.hdr-dropdown, .korean-dropdown').forEach(el => { if (el !== dd) el.hidden = true; });
+        dd.hidden = !willOpen;
+        // 열릴 때 onOpen 콜백
+        if (dd.hidden === false && typeof dd._onOpen === 'function') dd._onOpen();
+      };
+    }
+    _toggleHdrDropdown('headerKoreanBtn', 'koreanDropdown');
+    _toggleHdrDropdown('extractBtn', 'extractDropdown');
+    _toggleHdrDropdown('shortcutBtn', 'shortcutDropdown');
+    _toggleHdrDropdown('historyBtn', 'historyDropdown');
+
+    $('koreanRescanBtn').onclick = (e) => { e.stopPropagation(); detectKorean(); };
+
+    // 외부클릭 시 모든 드롭다운 닫기 (드롭다운 자기 자신 또는 wrap 안 클릭은 제외)
+    document.addEventListener('click', (e) => {
+      if (e.target.closest('.hdr-dropdown-wrap')) return;
+      document.querySelectorAll('.hdr-dropdown, .korean-dropdown').forEach(dd => { dd.hidden = true; });
+    });
+
+    /* MULTI-SEARCH — color-coded rows (한국어 빨강 제외 5색) */
+    const SEARCH_COLORS = [
+      { name: '노랑', hex: '#ffaa00' },
+      { name: '파랑', hex: '#3b82f6' },
+      { name: '초록', hex: '#10b981' },
+      { name: '보라', hex: '#a855f7' },
+      { name: '주황', hex: '#f97316' },
+      { name: '핑크', hex: '#ec4899' },
+      { name: '청록', hex: '#06b6d4' },
+      { name: '라임', hex: '#84cc16' },
+      { name: '빨강', hex: '#ef4444' },
+      { name: '검정', hex: '#1f2937' },
+    ];
+    const MAX_SEARCH_ROWS = SEARCH_COLORS.length;
+    let searchRows = []; // [{id, en, ja}] — index = color index
+    let _rowSeq = 0;
+
+    function _esc(s) { return (s == null ? '' : String(s)).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;'); }
+
+    function renderSearchRows() {
+      const wrap = $('searchRows');
+      wrap.innerHTML = '';
+      searchRows.forEach((row, idx) => {
+        const color = SEARCH_COLORS[idx];
+        const div = document.createElement('div');
+        div.className = 'search-row';
+        div.style.setProperty('--row-color', color.hex);
+        const removable = searchRows.length > 1;
+        div.innerHTML =
+          '<div class="search-row-head">' +
+            '<span class="search-row-color"></span>' +
+            '<span class="search-row-label">검색어 #' + (idx + 1) + ' (' + color.name + ')</span>' +
+            (removable ? '<button class="search-row-remove" data-id="' + row.id + '" title="이 검색어 제거">×</button>' : '') +
+          '</div>' +
+          '<div class="search-row-input"><span>EN</span><input type="text" data-lang="en" data-id="' + row.id + '" value="' + _esc(row.en) + '" placeholder="영어 검색어..."></div>' +
+          '<div class="search-row-input"><span>JA</span><input type="text" data-lang="ja" data-id="' + row.id + '" value="' + _esc(row.ja) + '" placeholder="일본어 검색어..."></div>';
+        wrap.appendChild(div);
+      });
+      wrap.querySelectorAll('input').forEach(inp => {
+        const id = +inp.dataset.id, lang = inp.dataset.lang;
+        const r = searchRows.find(x => x.id === id); if (!r) return;
+        inp.oninput = () => { r[lang] = inp.value; };
+        inp.onkeydown = e => { if (e.key === 'Enter') { e.preventDefault(); doSearch(); } };
+      });
+      wrap.querySelectorAll('.search-row-remove').forEach(b => {
+        b.onclick = () => { const id = +b.dataset.id; searchRows = searchRows.filter(x => x.id !== id); renderSearchRows(); };
+      });
+      const addBtn = $('addSearchRowBtn');
+      if (addBtn) {
+        addBtn.disabled = searchRows.length >= MAX_SEARCH_ROWS;
+        addBtn.textContent = searchRows.length >= MAX_SEARCH_ROWS
+          ? '＋ (최대 ' + MAX_SEARCH_ROWS + '개)' : '＋ 추가';
+      }
+    }
+    function addSearchRow() {
+      if (searchRows.length >= MAX_SEARCH_ROWS) return;
+      searchRows.push({ id: ++_rowSeq, en: '', ja: '' });
+      renderSearchRows();
+      setTimeout(() => {
+        const inputs = $('searchRows').querySelectorAll('input[data-lang="en"]');
+        if (inputs.length) inputs[inputs.length - 1].focus();
+      }, 0);
+    }
+    function focusFirstSearchInput() {
+      const inp = $('searchRows').querySelector('input[data-lang="en"]');
+      if (inp) inp.focus();
+    }
+    // initial: one row
+    searchRows = [{ id: ++_rowSeq, en: '', ja: '' }];
+    renderSearchRows();
+    $('addSearchRowBtn').onclick = addSearchRow;
+
+    /* SEARCH — postMessage (multi-query) */
+    /* SEARCH HISTORY — 스냅샷 단위, localStorage 영속 */
+    const SEARCH_HISTORY_KEY = 'oy-search-history';
+    const HISTORY_MAX = 20;
+    function loadHistory() {
+      try { return JSON.parse(localStorage.getItem(SEARCH_HISTORY_KEY) || '[]'); }
+      catch (e) { return []; }
+    }
+    function saveHistory(arr) {
+      try { localStorage.setItem(SEARCH_HISTORY_KEY, JSON.stringify(arr.slice(0, HISTORY_MAX))); }
+      catch (e) { /* quota / disabled — 무시 */ }
+    }
+    function _normalizedRows(rows) {
+      // 빈 행 제거하고 trim된 형태로 비교/저장 표준화
+      return rows
+        .map(r => ({ en: (r.en || '').trim(), ja: (r.ja || '').trim() }))
+        .filter(r => r.en || r.ja);
+    }
+    function _rowsEqual(a, b) {
+      if (a.length !== b.length) return false;
+      for (let i = 0; i < a.length; i++) {
+        if (a[i].en !== b[i].en || a[i].ja !== b[i].ja) return false;
+      }
+      return true;
+    }
+    function pushHistory(rows) {
+      const norm = _normalizedRows(rows);
+      if (!norm.length) return;
+      const hist = loadHistory();
+      // 직전 항목과 동일하면 skip (중복 방지)
+      if (hist.length && _rowsEqual(hist[0].rows, norm)) return;
+      hist.unshift({ ts: Date.now(), rows: norm });
+      saveHistory(hist);
+    }
+    function applyHistory(snapshot) {
+      // 스냅샷 행으로 검색창 복원
+      searchRows = snapshot.rows.map(r => ({ id: ++_rowSeq, en: r.en, ja: r.ja }));
+      if (!searchRows.length) searchRows = [{ id: ++_rowSeq, en: '', ja: '' }];
+      renderSearchRows();
+      $('historyDropdown').hidden = true;
+      toast('📜 히스토리 복원');
+    }
+    function removeHistoryAt(i) {
+      const hist = loadHistory(); hist.splice(i, 1); saveHistory(hist); renderHistory();
+    }
+    function clearAllHistory() {
+      saveHistory([]); renderHistory(); toast('🗑️ 히스토리 삭제됨');
+    }
+    function _formatTs(ts) {
+      const d = new Date(ts);
+      const pad = n => String(n).padStart(2, '0');
+      return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()) + ' ' + pad(d.getHours()) + ':' + pad(d.getMinutes());
+    }
+    function renderHistory() {
+      const c = $('historyList');
+      const hist = loadHistory();
+      c.innerHTML = '';
+      if (!hist.length) {
+        c.innerHTML = '<div style="color:var(--text2);padding:8px;font-size:12px">아직 저장된 히스토리가 없습니다.</div>';
+        return;
+      }
+      hist.forEach((snap, i) => {
+        const item = document.createElement('div');
+        item.className = 'history-item';
+        const enC = snap.rows.filter(r => r.en).length;
+        const jaC = snap.rows.filter(r => r.ja).length;
+        const preview = snap.rows.slice(0, 3).map(r =>
+          '<div class="history-row-preview">• ' +
+          (r.en ? '<span class="hist-en">' + escapeHtml(r.en) + '</span>' : '<span class="hist-empty">—</span>') +
+          ' / ' +
+          (r.ja ? '<span class="hist-ja">' + escapeHtml(r.ja) + '</span>' : '<span class="hist-empty">—</span>') +
+          '</div>'
+        ).join('') + (snap.rows.length > 3 ? '<div class="history-row-preview hist-more">… 외 ' + (snap.rows.length - 3) + '개</div>' : '');
+        item.innerHTML =
+          '<div class="history-item-head">' +
+            '<span class="hist-ts">' + _formatTs(snap.ts) + '</span>' +
+            '<span class="hist-meta">EN ' + enC + ' / JA ' + jaC + '</span>' +
+            '<button class="hist-del" title="이 항목 삭제">✕</button>' +
+          '</div>' +
+          '<div class="history-item-body">' + preview + '</div>';
+        item.querySelector('.hist-del').onclick = (e) => { e.stopPropagation(); removeHistoryAt(i); };
+        item.onclick = () => applyHistory(snap);
+        c.appendChild(item);
+      });
+    }
+    function escapeHtml(s) { return String(s).replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' })[c]); }
+    $('historyDropdown')._onOpen = () => renderHistory();
+    $('historyClearAllBtn').onclick = (e) => { e.stopPropagation(); if (confirm('히스토리 전체를 삭제할까요?')) clearAllHistory(); };
+
+    async function doSearch() {
+      const enQs = [], jaQs = [];
+      searchRows.forEach((r, idx) => {
+        const cls = 'oy-search-hl-' + idx;
+        if (r.en && r.en.trim()) enQs.push({ q: r.en.trim(), cls, idx });
+        if (r.ja && r.ja.trim()) jaQs.push({ q: r.ja.trim(), cls, idx });
+      });
+      if (!enQs.length && !jaQs.length) return toast('검색어를 하나 이상 입력하세요');
+      // 검색 실행 시 스냅샷 저장
+      pushHistory(searchRows);
+      const o = getOpts(), allRes = [];
+      clearMinimap();
+      for (const l of ['en', 'ja']) {
+        const queries = l === 'en' ? enQs : jaQs;
+        if (!queries.length || !filesLoaded[l]) continue;
+        const resp = await sendMsg(l, { t: 'search', queries, opts: o });
+        if (resp && resp.r) {
+          resp.r.forEach(r => allRes.push({ lang: l, idx: r.i, snippet: r.sn, count: r.count, top: r.top, qIdx: r.qIdx || 0 }));
+          // Group by qIdx for colored minimap markers
+          const byColor = {};
+          resp.r.forEach(r => { const k = r.qIdx || 0; (byColor[k] = byColor[k] || []).push(r); });
+          Object.keys(byColor).forEach(k => updateMinimapPM(l, byColor[k], 'search-' + k));
+        }
+      }
+      // 새 검색 — 활성 qIdx 전체 저장 (결과 없는 검색어도 pill에 표시)
+      _lastActiveQIdxSet = new Set([...enQs.map(q => q.idx), ...jaQs.map(q => q.idx)]);
+      _lastSearchResults = allRes;
+      _searchFilter = null;
+      renderSearchPills();
+      renderSearchResultList();
+      const enResAll = allRes.filter(r => r.lang === 'en').length;
+      const jaResAll = allRes.filter(r => r.lang === 'ja').length;
+      toast('🔍 EN ' + enResAll + ' / JA ' + jaResAll + ' 발견');
+    }
+
+    /* 검색 결과 + pill 필터링 — 검색어별 pill 클릭으로 결과 좁히기 */
+    let _lastSearchResults = [];
+    let _lastActiveQIdxSet = new Set(); // 이번 검색에서 쿼리를 입력한 qIdx 전체
+    let _searchFilter = null; // null = 전체, number = qIdx만
+
+    function renderSearchPills() {
+      const cc = $('searchCount');
+      if (!_lastActiveQIdxSet.size) { cc.innerHTML = ''; return; }
+      const byQ = {};
+      _lastSearchResults.forEach(r => {
+        const k = r.qIdx || 0;
+        if (!byQ[k]) byQ[k] = { en: 0, ja: 0 };
+        byQ[k][r.lang]++;
+      });
+      // 결과가 있는 qIdx + 결과가 없는(쿼리는 있었던) qIdx 모두 포함
+      const allQIdx = [..._lastActiveQIdxSet].sort((a, b) => a - b);
+      const hasFilter = _searchFilter !== null;
+      const pills = allQIdx.map(qi => {
+        const color = (SEARCH_COLORS[qi] || SEARCH_COLORS[0]).hex;
+        const hasResult = !!byQ[qi];
+        if (!hasResult) {
+          // 결과 없음 pill — 클릭 불가, 흐리게 표시
+          return '<span class="result-count-pill-q result-count-pill-empty" title="#' + (qi + 1) + ' 검색 결과 없음" ' +
+            'style="background:transparent;border-color:' + color + '55;color:' + color + '88;cursor:default">' +
+            '<b>#' + (qi + 1) + '</b> 없음</span>';
+        }
+        const enC = byQ[qi].en || 0;
+        const jaC = byQ[qi].ja || 0;
+        const parts = (enC ? 'EN ' + enC : '') + (enC && jaC ? ' / ' : '') + (jaC ? 'JA ' + jaC : '');
+        const cls = 'result-count-pill-q' + (hasFilter ? (_searchFilter === qi ? ' active-filter' : ' dimmed') : '');
+        const title = (_searchFilter === qi) ? '클릭하면 전체 보기' : '#' + (qi + 1) + '만 보기';
+        return '<span class="' + cls + '" data-qidx="' + qi + '" title="' + title + '" style="background:' + color + '22;border-color:' + color + ';color:' + color + '">' +
+          '<b>#' + (qi + 1) + '</b>' + parts + '</span>';
+      }).join('');
+      const allBtn = hasFilter ? '<span class="result-count-pill-q result-count-pill-all" data-qidx="all" title="필터 해제 (전체 보기)" style="border-color:var(--border);color:var(--text2);background:transparent">✕ 전체 보기</span>' : '';
+      cc.innerHTML = '<div class="result-count-row">' + pills + allBtn + '</div>';
+      // 결과 있는 pill만 클릭 핸들러 바인딩 (없음 pill은 data-qidx 없으므로 자동 제외)
+      cc.querySelectorAll('.result-count-pill-q[data-qidx]').forEach(el => {
+        el.onclick = () => {
+          const v = el.dataset.qidx;
+          if (v === 'all') { _searchFilter = null; }
+          else {
+            const qi = +v;
+            _searchFilter = (_searchFilter === qi) ? null : qi;
+          }
+          renderSearchPills();
+          renderSearchResultList();
+        };
+      });
+    }
+
+    function renderSearchResultList() {
+      const sc = $('searchResults'); sc.innerHTML = '';
+      const data = (_searchFilter === null)
+        ? _lastSearchResults
+        : _lastSearchResults.filter(r => (r.qIdx || 0) === _searchFilter);
+      if (!data.length) {
+        const msg = _searchFilter === null ? '결과 없음' : '#' + (_searchFilter + 1) + ' 결과 없음';
+        sc.innerHTML = '<div style="color:var(--text2);padding:4px;font-size:11px">' + msg + '</div>';
+        return;
+      }
+      const enRes = data.filter(r => r.lang === 'en');
+      const jaRes = data.filter(r => r.lang === 'ja');
+      const renderItem = r => {
+        const d = document.createElement('div'); d.className = 'result-item';
+        const colorHex = (SEARCH_COLORS[r.qIdx] || SEARCH_COLORS[0]).hex;
+        d.innerHTML =
+          '<span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:' + colorHex + ';margin-right:6px;flex-shrink:0"></span>' +
+          '<span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:11px">' + r.snippet + (r.count > 1 ? ' (×' + r.count + ')' : '') + '</span>' +
+          '<span class="lang-tag ' + r.lang + '">' + r.lang.toUpperCase() + '</span>';
+        d.onclick = () => $(r.lang + 'Frame').contentWindow?.postMessage({ t: 'goBlock', i: r.idx }, '*');
+        return d;
+      };
+      const renderSection = (lang, label, items) => {
+        if (!items.length) return;
+        const head = document.createElement('div');
+        head.className = 'result-section-head ' + lang;
+        head.innerHTML = '<span>' + label + '</span><span class="sect-count">' + items.length + '개</span>';
+        sc.appendChild(head);
+        items.forEach(r => sc.appendChild(renderItem(r)));
+      };
+      renderSection('en', '🇺🇸 ENGLISH', enRes);
+      renderSection('ja', '🇯🇵 JAPANESE', jaRes);
+    }
+
+    function clearSearch() {
+      searchRows = [{ id: ++_rowSeq, en: '', ja: '' }];
+      renderSearchRows();
+      _lastSearchResults = []; _lastActiveQIdxSet = new Set(); _searchFilter = null;
+      $('searchCount').innerHTML = ''; $('searchResults').innerHTML = '';
+      clearMinimap();
+      ['en', 'ja'].forEach(l => $(l + 'Frame').contentWindow?.postMessage({ t: 'clear' }, '*'));
+    }
+    $('searchBtn').onclick = doSearch;
+    $('clearSearchBtn').onclick = clearSearch;
+
+    /* TEXT EXTRACT — postMessage. 드롭다운이 열릴 때 자동 1회 실행 + 재추출 버튼으로 수동 재실행 */
+    async function doExtract() {
+      for (const l of ['en', 'ja']) {
+        const c = $(l + 'Extract'); c.innerHTML = '';
+        if (!filesLoaded[l]) { c.innerHTML = '<div class="extract-item" style="color:var(--text2)">파일 없음</div>'; continue; }
+        const resp = await sendMsg(l, { t: 'extract' });
+        if (resp && resp.r) {
+          resp.r.forEach((r, idx) => {
+            const div = document.createElement('div'); div.className = 'extract-item'; div.textContent = (idx + 1) + '. ' + r.text;
+            div.onclick = () => $(l + 'Frame').contentWindow?.postMessage({ t: 'goBlock', i: r.i }, '*');
+            c.appendChild(div);
+          });
+        }
+      }
+      toast('텍스트 추출 완료');
+    }
+    $('extractRunBtn').onclick = (e) => { e.stopPropagation(); doExtract(); };
+    // 드롭다운이 처음 열릴 때 자동 추출 (이미 한 번 채워졌으면 스킵)
+    $('extractDropdown')._onOpen = () => {
+      const enHas = $('enExtract').children.length > 0;
+      const jaHas = $('jaExtract').children.length > 0;
+      if (!enHas && !jaHas) doExtract();
+    };
+
+    // 키보드 단축키
+    document.addEventListener('keydown', e => {
+      if (e.ctrlKey && e.shiftKey && (e.key === 'F' || e.key === 'f')) {
+        e.preventDefault(); toggleSidebar(true);
+        setTimeout(() => { if (typeof focusFirstSearchInput === 'function') focusFirstSearchInput(); }, 100);
+      }
+      // 검색 초기화 단축키 — Ctrl+Shift+X
+      if (e.ctrlKey && e.shiftKey && (e.key === 'X' || e.key === 'x')) {
+        e.preventDefault();
+        clearSearch();
+        toast('🧹 검색 초기화');
+      }
+      if (e.key === 'F8') {
+        e.preventDefault();
+        const cb = $('syncScroll'); cb.checked = !cb.checked;
+        toast(cb.checked ? '상시 동기화 ON' : '상시 동기화 OFF');
+      }
+      if (e.key === 'Escape') {
+        // 드래그 오버레이가 떠있으면 그것부터 닫고 sidebar는 그대로
+        if (document.body.classList.contains('global-drag-over')) return;
+        // KR sticky 모드 활성 시 → ESC로 해제 (사이드바 토글보다 우선)
+        if (krSticky) { krSticky = false; hideKrOverlay(); toast('🇰🇷 원본 비교 OFF (Esc)'); return; }
+        // 검색 input에 포커스가 있다면 input만 비우기 (검색 결과는 유지)
+        const ae = document.activeElement;
+        if (ae && ae.tagName === 'INPUT' && ae.closest('.search-row')) {
+          ae.value = '';
+          ae.dispatchEvent(new Event('input'));
+          return;
+        }
+        e.preventDefault(); toggleSidebar();
+      }
+    });
+
+    /* EXPORT */
+    $('exportBtn').onclick = () => {
+      if (!S.errors.length) return toast('내보낼 오류 없음');
+      let csv = 'Type,Language,Content\n'; S.errors.forEach(e => csv += e.type + ',' + e.lang + ',"' + (e.text || '').replace(/"/g, '""') + '"\n');
+      const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob(['\uFEFF' + csv], { type: 'text/csv' })); a.download = 'oy-errors-' + new Date().toISOString().slice(0, 10) + '.csv'; a.click(); toast('내보내기 완료')
+    };
+  </script>
+</body>
+
+</html>
