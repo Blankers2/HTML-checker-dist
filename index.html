@@ -491,6 +491,19 @@
     /* legacy */
     .mark-search { background: #ffaa00; z-index: 2; }
 
+    /* pill 클릭 필터링 — 미니맵 마커 dim/highlight */
+    .minimap[data-search-filter] .minimap-mark { opacity: 0.1; transition: opacity 0.15s; }
+    .minimap[data-search-filter="0"] .mark-search-0,
+    .minimap[data-search-filter="1"] .mark-search-1,
+    .minimap[data-search-filter="2"] .mark-search-2,
+    .minimap[data-search-filter="3"] .mark-search-3,
+    .minimap[data-search-filter="4"] .mark-search-4,
+    .minimap[data-search-filter="5"] .mark-search-5,
+    .minimap[data-search-filter="6"] .mark-search-6,
+    .minimap[data-search-filter="7"] .mark-search-7,
+    .minimap[data-search-filter="8"] .mark-search-8,
+    .minimap[data-search-filter="9"] .mark-search-9 { opacity: 1; }
+
     .mark-korean {
       background: #ff2222;
       z-index: 3;
@@ -2394,6 +2407,13 @@
     let _searchFilter = null; // null = 전체, number = qIdx만
 
     function renderSearchPills() {
+      // 미니맵 마커 dim/highlight 동기화
+      ['en','ja'].forEach(l => {
+        const m = $(l + 'Minimap');
+        if (!m) return;
+        if (_searchFilter === null) m.removeAttribute('data-search-filter');
+        else m.setAttribute('data-search-filter', String(_searchFilter));
+      });
       const cc = $('searchCount');
       if (!_lastActiveQIdxSet.size) { cc.innerHTML = ''; return; }
       const byQ = {};
