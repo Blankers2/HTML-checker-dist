@@ -504,6 +504,16 @@
     .minimap[data-search-filter="8"] .mark-search-8,
     .minimap[data-search-filter="9"] .mark-search-9 { opacity: 1; }
 
+    /* unmatched 마커 — 좌측 빨간 줄 (반대 언어에 매칭 블록 없음) */
+    .minimap-mark.unmatched::before {
+      content: '';
+      position: absolute;
+      left: 0; top: 0; bottom: 0;
+      width: 3px;
+      background: #ff4444;
+      border-radius: 1px 0 0 1px;
+    }
+
     .mark-korean {
       background: #ff2222;
       z-index: 3;
@@ -2124,6 +2134,7 @@
         const mark = document.createElement('div');
         mark.className = 'minimap-mark ' + colorClass;
         mark.style.top = pct + '%';
+        if (r.i !== undefined) mark.dataset.blockIdx = r.i;
         map.appendChild(mark);
       });
     }
@@ -2132,6 +2143,24 @@
       ['en', 'ja'].forEach(lang => {
         $(lang + 'Minimap').querySelectorAll('.minimap-mark').forEach(m => m.remove());
       });
+    }
+    function applyUnmatchedMarkers(qIdx) {
+      const enIdxSet = new Set(_lastSearchResults
+        .filter(r => r.lang === 'en' && r.qIdx === qIdx).map(r => r.idx));
+      const jaIdxSet = new Set(_lastSearchResults
+        .filter(r => r.lang === 'ja' && r.qIdx === qIdx).map(r => r.idx));
+      ['en', 'ja'].forEach(lang => {
+        const otherSet = lang === 'en' ? jaIdxSet : enIdxSet;
+        $(lang + 'Minimap').querySelectorAll('.mark-search-' + qIdx).forEach(mark => {
+          const bi = mark.dataset.blockIdx;
+          mark.classList.toggle('unmatched', bi !== undefined && !otherSet.has(+bi));
+        });
+      });
+    }
+    function clearUnmatchedMarkers() {
+      ['en', 'ja'].forEach(lang =>
+        $(lang + 'Minimap').querySelectorAll('.minimap-mark.unmatched')
+          .forEach(m => m.classList.remove('unmatched')));
     }
 
     /* KOREAN DETECTION — postMessage */
@@ -2414,6 +2443,8 @@
         if (_searchFilter === null) m.removeAttribute('data-search-filter');
         else m.setAttribute('data-search-filter', String(_searchFilter));
       });
+      if (_searchFilter === null) clearUnmatchedMarkers();
+      else applyUnmatchedMarkers(_searchFilter);
       const cc = $('searchCount');
       if (!_lastActiveQIdxSet.size) { cc.innerHTML = ''; return; }
       const byQ = {};
