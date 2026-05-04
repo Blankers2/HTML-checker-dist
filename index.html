@@ -504,14 +504,17 @@
     .minimap[data-search-filter="8"] .mark-search-8,
     .minimap[data-search-filter="9"] .mark-search-9 { opacity: 1; }
 
-    /* unmatched 마커 — 좌측 빨간 줄 (반대 언어에 매칭 블록 없음) */
+    /* unmatched 마커 — 미니맵 왼쪽 외부에 ▶ 표시 (반대 언어에 매칭 블록 없음) */
     .minimap-mark.unmatched::before {
-      content: '';
+      content: '▶';
       position: absolute;
-      left: 0; top: 0; bottom: 0;
-      width: 3px;
-      background: #ff4444;
-      border-radius: 1px 0 0 1px;
+      right: 100%;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 7px;
+      line-height: 1;
+      color: #ff4444;
+      pointer-events: none;
     }
 
     .mark-korean {
@@ -2245,7 +2248,7 @@
       { name: '청록', hex: '#06b6d4' },
       { name: '라임', hex: '#84cc16' },
       { name: '빨강', hex: '#ef4444' },
-      { name: '검정', hex: '#1f2937' },
+      { name: '검정', hex: '#1f2937', dark: true },
     ];
     const MAX_SEARCH_ROWS = SEARCH_COLORS.length;
     let searchRows = []; // [{id, en, ja}] — index = color index
@@ -2457,12 +2460,17 @@
       const allQIdx = [..._lastActiveQIdxSet].sort((a, b) => a - b);
       const hasFilter = _searchFilter !== null;
       const pills = allQIdx.map(qi => {
-        const color = (SEARCH_COLORS[qi] || SEARCH_COLORS[0]).hex;
+        const sc = SEARCH_COLORS[qi] || SEARCH_COLORS[0];
+        const color = sc.hex;
+        const isDark = !!sc.dark;
         const hasResult = !!byQ[qi];
         if (!hasResult) {
           // 결과 없음 pill — 클릭 불가, 흐리게 표시
+          const emptyStyle = isDark
+            ? 'background:transparent;border-color:#1f293755;color:#1f293788;cursor:default'
+            : 'background:transparent;border-color:' + color + '55;color:' + color + '88;cursor:default';
           return '<span class="result-count-pill-q result-count-pill-empty" title="#' + (qi + 1) + ' 검색 결과 없음" ' +
-            'style="background:transparent;border-color:' + color + '55;color:' + color + '88;cursor:default">' +
+            'style="' + emptyStyle + '">' +
             '<b>#' + (qi + 1) + '</b> 없음</span>';
         }
         const enC = byQ[qi].en || 0;
@@ -2470,7 +2478,11 @@
         const parts = (enC ? 'EN ' + enC : '') + (enC && jaC ? ' / ' : '') + (jaC ? 'JA ' + jaC : '');
         const cls = 'result-count-pill-q' + (hasFilter ? (_searchFilter === qi ? ' active-filter' : ' dimmed') : '');
         const title = (_searchFilter === qi) ? '클릭하면 전체 보기' : '#' + (qi + 1) + '만 보기';
-        return '<span class="' + cls + '" data-qidx="' + qi + '" title="' + title + '" style="background:' + color + '22;border-color:' + color + ';color:' + color + '">' +
+        // dark 색상(검정)은 라이트/다크 모드 모두 가시성 확보: 흰 글자 + 검정 배경/테두리
+        const pillStyle = isDark
+          ? 'background:#1f2937;border-color:#1f2937;color:#ffffff'
+          : 'background:' + color + '22;border-color:' + color + ';color:' + color;
+        return '<span class="' + cls + '" data-qidx="' + qi + '" title="' + title + '" style="' + pillStyle + '">' +
           '<b>#' + (qi + 1) + '</b>' + parts + '</span>';
       }).join('');
       const allBtn = hasFilter ? '<span class="result-count-pill-q result-count-pill-all" data-qidx="all" title="필터 해제 (전체 보기)" style="border-color:var(--border);color:var(--text2);background:transparent">✕ 전체 보기</span>' : '';
