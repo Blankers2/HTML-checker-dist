@@ -2233,14 +2233,16 @@
         _kStatus.textContent = '\u2705 한국어 없음';
         _kStatus.className = 'korean-dropdown-status ok';
       }
-      // 한국어 발견 시 드롭다운 자동 노출 (작업자 인지율 향상)
+      // 한국어 발견 시 드롭다운 자동 노출, 미발견 시 자동 닫힘
+      const koreanDD = $('koreanDropdown');
       if (allRes.length > 0) {
-        const koreanDD = $('koreanDropdown');
         // 다른 헤더 드롭다운 모두 닫기 (한 번에 하나만)
         document.querySelectorAll('.hdr-dropdown, .korean-dropdown').forEach(d => {
           if (d !== koreanDD) d.hidden = true;
         });
         koreanDD.hidden = false;
+      } else {
+        koreanDD.hidden = true;
       }
       // 자동 실행(silent)일 때는 한국어 검출 시에만 토스트 (없으면 조용히)
       if (silent) {
