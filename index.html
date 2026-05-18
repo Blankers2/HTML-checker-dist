@@ -1201,7 +1201,7 @@
         <div class="hdr-dropdown korean-dropdown" id="koreanDropdown" hidden>
           <div class="hdr-dropdown-head korean-dropdown-head">
             <span class="korean-dropdown-status ok" id="koreanDropdownStatus">검사 전</span>
-            <button class="btn btn-sm" id="koreanRescanBtn" title="다시 검사">🔄 재검사</button>
+            <button class="btn btn-sm" id="koreanRescanBtn" title="현재 위치 다시 확인">📍 위치확인</button>
           </div>
           <div class="korean-dropdown-list result-list" id="koreanResults"></div>
         </div>
@@ -1529,7 +1529,8 @@
         if (m.t === 'scrollBy') window.scrollBy({ top: m.dy });
         if (m.t === 'search') {
           // 다중검색 지원: m.queries = [{q, cls, idx}], 단일검색은 m.q + m.cls(생략시 'oy-search-hl')
-          clrAllSearch(); clr('oy-korean-hl');
+          // 한국어 마크는 보존 (공존 모드)
+          clrAllSearch();
           const queries = m.queries && m.queries.length ? m.queries
             : (m.q ? [{ q: m.q, cls: m.cls || 'oy-search-hl', idx: 0 }] : []);
           const res = [];
@@ -1548,7 +1549,8 @@
           parent.postMessage({ t: 'searchR', id: m.id, r: res }, '*');
         }
         if (m.t === 'korean') {
-          clr('oy-korean-hl'); clrAllSearch();
+          // 검색 마크는 보존 (공존 모드)
+          clr('oy-korean-hl');
           const res = [];
           document.querySelectorAll('.text-info').forEach((b, i) => {
             // 블록당 1회 buildFlat → korean regex + hl 모두에 재사용
@@ -1652,7 +1654,7 @@
         'mark.oy-search-hl-8{background:rgba(239,68,68,0.55)!important;color:#fff!important}',  /* 빨강 */
         'mark.oy-search-hl-9{background:rgba(31,41,55,0.85)!important;color:#fff!important}',    /* 검정 */
         'mark[class*="oy-search-hl"]{padding:0!important;margin:0!important;border-radius:2px!important}',
-        'mark.oy-korean-hl{background:rgba(255,71,87,0.45)!important;color:inherit!important;padding:0!important;margin:0!important;border-radius:2px!important}',
+        'mark.oy-korean-hl{background:rgba(255,0,51,0.4)!important;color:inherit!important;padding:0!important;margin:0!important;border-radius:2px!important;text-decoration:underline wavy #ff0033!important;text-decoration-thickness:1.5px!important;text-underline-offset:2px!important}',
       ].join('');
       // KR 원본은 raw <img>만 있어서 자연 크기로 노출 → max-width:100%로 패널 안에 맞추고, 작으면 중앙정렬+흰여백 (업스케일 X)
       const krImgCss = isKr ? 'img{max-width:100%!important;height:auto!important;display:block!important;margin:0 auto!important}body{text-align:center!important}' : '';
@@ -2256,7 +2258,10 @@
         e.stopPropagation();
         const willOpen = dd.hidden;
         // 다른 모든 hdr-dropdown 닫기 (한 번에 하나만 열려있게)
-        document.querySelectorAll('.hdr-dropdown, .korean-dropdown').forEach(el => { if (el !== dd) el.hidden = true; });
+        // 한국어 드롭다운은 고정 모드 — 자신의 헤더 pill 클릭이 아닌 한 닫지 않음
+        document.querySelectorAll('.hdr-dropdown, .korean-dropdown').forEach(el => {
+          if (el !== dd && el.id !== 'koreanDropdown') el.hidden = true;
+        });
         dd.hidden = !willOpen;
         // 열릴 때 onOpen 콜백
         if (dd.hidden === false && typeof dd._onOpen === 'function') dd._onOpen();
@@ -2269,10 +2274,12 @@
 
     $('koreanRescanBtn').onclick = (e) => { e.stopPropagation(); detectKorean(); };
 
-    // 외부클릭 시 모든 드롭다운 닫기 (드롭다운 자기 자신 또는 wrap 안 클릭은 제외)
+    // 외부클릭 시 모든 드롭다운 닫기 (한국어 드롭다운은 고정 모드 — 헤더 pill 클릭으로만 닫힘)
     document.addEventListener('click', (e) => {
       if (e.target.closest('.hdr-dropdown-wrap')) return;
-      document.querySelectorAll('.hdr-dropdown, .korean-dropdown').forEach(dd => { dd.hidden = true; });
+      document.querySelectorAll('.hdr-dropdown, .korean-dropdown').forEach(dd => {
+        if (dd.id !== 'koreanDropdown') dd.hidden = true;
+      });
     });
 
     /* MULTI-SEARCH — color-coded rows (한국어 빨강 제외 5색) */
