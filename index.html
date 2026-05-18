@@ -491,8 +491,8 @@
     /* legacy */
     .mark-search { background: #ffaa00; z-index: 2; }
 
-    /* pill 클릭 필터링 — 미니맵 마커 dim/highlight */
-    .minimap[data-search-filter] .minimap-mark { opacity: 0.1; transition: opacity 0.15s; }
+    /* pill 클릭 필터링 — 미니맵 마커 dim/highlight (한국어 마커는 제외) */
+    .minimap[data-search-filter] .minimap-mark:not(.mark-korean) { opacity: 0.1; transition: opacity 0.15s; }
     .minimap[data-search-filter="0"] .mark-search-0,
     .minimap[data-search-filter="1"] .mark-search-1,
     .minimap[data-search-filter="2"] .mark-search-2,
@@ -518,8 +518,29 @@
     }
 
     .mark-korean {
-      background: #ff2222;
+      background: #ff0033;
       z-index: 3;
+      height: 5px;
+      box-shadow: 0 0 5px rgba(255, 0, 51, 0.75),
+                  0 0 1px rgba(255, 255, 255, 0.6);
+      animation: pulse-korean 1.4s ease-in-out infinite;
+    }
+    @keyframes pulse-korean {
+      0%, 100% { opacity: 1; }
+      50%      { opacity: 0.45; }
+    }
+    .mark-korean::before {
+      content: '⚠';
+      position: absolute;
+      right: 100%;
+      top: 50%;
+      transform: translateY(-50%);
+      margin-right: 1px;
+      font-size: 9px;
+      line-height: 1;
+      color: #ff0033;
+      text-shadow: 0 0 3px rgba(255, 0, 51, 0.6);
+      pointer-events: none;
     }
 
     /* EMPTY / DROP STATE */
@@ -2141,10 +2162,18 @@
         map.appendChild(mark);
       });
     }
-    function clearMinimap() {
+    function clearMinimap(type) {
+      // type: undefined='all' | 'korean' | 'search'
       // innerHTML = '' 하면 mm-thumb까지 지워지므로 marks만 제거
       ['en', 'ja'].forEach(lang => {
-        $(lang + 'Minimap').querySelectorAll('.minimap-mark').forEach(m => m.remove());
+        const map = $(lang + 'Minimap');
+        if (!type) {
+          map.querySelectorAll('.minimap-mark').forEach(m => m.remove());
+        } else if (type === 'korean') {
+          map.querySelectorAll('.mark-korean').forEach(m => m.remove());
+        } else if (type === 'search') {
+          map.querySelectorAll('[class*="mark-search-"]').forEach(m => m.remove());
+        }
       });
     }
     function applyUnmatchedMarkers(qIdx) {
@@ -2170,7 +2199,7 @@
     async function detectKorean(opts) {
       const silent = opts && opts.silent;
       const allRes = [];
-      clearMinimap();
+      clearMinimap('korean');
       for (const l of ['en', 'ja']) {
         if (!filesLoaded[l]) continue;
         const resp = await sendMsg(l, { t: 'korean' });
@@ -2201,6 +2230,15 @@
         _kBtnText.textContent = '\u2705 한국어 없음';
         _kStatus.textContent = '\u2705 한국어 없음';
         _kStatus.className = 'korean-dropdown-status ok';
+      }
+      // 한국어 발견 시 드롭다운 자동 노출 (작업자 인지율 향상)
+      if (allRes.length > 0) {
+        const koreanDD = $('koreanDropdown');
+        // 다른 헤더 드롭다운 모두 닫기 (한 번에 하나만)
+        document.querySelectorAll('.hdr-dropdown, .korean-dropdown').forEach(d => {
+          if (d !== koreanDD) d.hidden = true;
+        });
+        koreanDD.hidden = false;
       }
       // 자동 실행(silent)일 때는 한국어 검출 시에만 토스트 (없으면 조용히)
       if (silent) {
@@ -2409,7 +2447,7 @@
       // 검색 실행 시 스냅샷 저장
       pushHistory(searchRows);
       const o = getOpts(), allRes = [];
-      clearMinimap();
+      clearMinimap('search');
       for (const l of ['en', 'ja']) {
         const queries = l === 'en' ? enQs : jaQs;
         if (!queries.length || !filesLoaded[l]) continue;
@@ -2541,7 +2579,7 @@
       renderSearchRows();
       _lastSearchResults = []; _lastActiveQIdxSet = new Set(); _searchFilter = null;
       $('searchCount').innerHTML = ''; $('searchResults').innerHTML = '';
-      clearMinimap();
+      clearMinimap('search');
       ['en', 'ja'].forEach(l => $(l + 'Frame').contentWindow?.postMessage({ t: 'clear' }, '*'));
     }
     $('searchBtn').onclick = doSearch;
