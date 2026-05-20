@@ -3,17 +3,21 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>HTML Checker — 번역 검수의 시간을 되돌려드립니다</title>
-<meta name="description" content="HTML 번역(EN/JA) 파일을 한국어 원본과 함께 브라우저에서 비교·검수하는 사내 QA 도구. 단일 파일, 의존성 0, 설치 없이 Chrome에서 즉시 사용.">
+<title>HTML Checker — 번역 검수 효율을 극대화하는 사내 QA 도구</title>
+<meta name="description" content="HTML 번역(EN/JA)과 원본(KO) 파일을 한 화면에서 비교 · 검수하는 브라우저 기반 QA 도구. TM 다중 검색 · 한국어 자동 탐지 · KR 원본 토글 비교. 단일 파일, 의존성 0, 설치 없이 Chrome에서 즉시 사용.">
 
+<!-- Pretendard Variable — 한국어 본문/UI의 사실상 표준 -->
+<link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.min.css">
+<!-- Paperlogy — 모던 한국어 디스플레이 -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght,SOFT,WONK@0,9..144,300..900,0..100,0..1;1,9..144,300..900,0..100,0..1&family=IBM+Plex+Sans+KR:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght,SOFT,WONK@0,9..144,300..900,0..100,0..1;1,9..144,300..900,0..100,0..1&family=Paperlogy:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
 
 <style>
 /* =================================================================
-   HTML CHECKER — PITCH DOCUMENT
-   Aesthetic: Engineering editorial · warm dark · vermillion punch
+   HTML CHECKER — PITCH DOCUMENT v2
+   Aesthetic: Korean editorial · warm dark · vermillion punch
+   Typography: Pretendard (sans) + Paperlogy (kr display) + Fraunces (en serif)
    ================================================================= */
 
 * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -28,21 +32,22 @@
   --line-soft:  #1f1c1a;
 
   --text:       #f5efe4;
-  --text-soft:  #c8c0b2;
-  --text-mute:  #84807a;
+  --text-soft:  #d4ccbd;
+  --text-mute:  #8a847a;
   --text-faint: #4a4744;
 
-  --accent:     #ff5c2b;   /* vermillion */
+  --accent:     #ff5c2b;
   --accent-deep:#cb3a0a;
   --accent-glow:#ff8c5e;
-  --critical:   #ff0033;   /* Korean detection red */
+  --critical:   #ff0033;
   --mint:       #6dd3c4;
   --tan:        #c0a888;
   --gold:       #d4af37;
 
-  --serif:      "Fraunces", "Noto Serif KR", Georgia, serif;
-  --sans:       "IBM Plex Sans KR", "Pretendard", -apple-system, sans-serif;
-  --mono:       "JetBrains Mono", "SF Mono", Consolas, monospace;
+  --serif:    "Fraunces", "Paperlogy", "Pretendard Variable", "Noto Serif KR", Georgia, serif;
+  --display-kr: "Paperlogy", "Pretendard Variable", -apple-system, sans-serif;
+  --sans:     "Pretendard Variable", "Pretendard", -apple-system, BlinkMacSystemFont, sans-serif;
+  --mono:     "JetBrains Mono", "SF Mono", Consolas, monospace;
 
   --maxw: 1280px;
   --pad: clamp(1.5rem, 5vw, 4.5rem);
@@ -56,30 +61,32 @@ body {
   color: var(--text);
   line-height: 1.55;
   font-weight: 400;
-  font-size: 17px;
+  font-size: 16.5px;
+  letter-spacing: -0.01em;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   overflow-x: hidden;
   position: relative;
+  word-break: keep-all;
+  text-spacing: trim-start allow-end trim-adjacent;
 }
 
-/* Background grain — adds subtle texture across the whole document */
+/* Background grain */
 body::before {
   content: "";
   position: fixed; inset: 0;
   background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.96 0 0 0 0 0.94 0 0 0 0 0.89 0 0 0 0.5 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.4'/%3E%3C/svg%3E");
   pointer-events: none;
-  opacity: 0.08;
+  opacity: 0.07;
   mix-blend-mode: overlay;
   z-index: 1;
 }
 
-/* Typography primitives */
 .serif { font-family: var(--serif); }
 .mono  { font-family: var(--mono); }
+.kr-display { font-family: var(--display-kr); }
 
-h1, h2, h3, h4 { font-family: var(--serif); font-weight: 400; line-height: 1.05; letter-spacing: -0.015em; }
-h2.korean, h3.korean { font-family: var(--sans); font-weight: 600; line-height: 1.2; letter-spacing: -0.02em; }
+h1, h2, h3, h4 { font-family: var(--serif); font-weight: 400; line-height: 1.05; letter-spacing: -0.018em; }
 
 .eyebrow {
   font-family: var(--mono);
@@ -94,14 +101,6 @@ h2.korean, h3.korean { font-family: var(--sans); font-weight: 600; line-height: 
   background: var(--accent);
 }
 
-.lede {
-  font-size: clamp(1.1rem, 1.4vw, 1.25rem);
-  color: var(--text-soft);
-  line-height: 1.6;
-  max-width: 56ch;
-}
-
-/* Container */
 .wrap {
   max-width: var(--maxw);
   margin: 0 auto;
@@ -133,10 +132,7 @@ h2.korean, h3.korean { font-family: var(--sans); font-weight: 600; line-height: 
   text-decoration: none;
   font-feature-settings: "ss01";
 }
-.brand-mark {
-  font-size: 1.2rem;
-  filter: grayscale(0.1);
-}
+.brand-mark { font-size: 1.2rem; }
 .brand-meta {
   margin-left: 0.7rem; padding-left: 0.7rem;
   border-left: 1px solid var(--line);
@@ -147,16 +143,15 @@ h2.korean, h3.korean { font-family: var(--sans); font-weight: 600; line-height: 
 }
 .nav-links {
   display: flex; gap: 2rem;
-  font-family: var(--mono);
-  font-size: 12px; letter-spacing: 0.08em;
-  text-transform: uppercase;
+  font-family: var(--sans);
+  font-weight: 500;
+  font-size: 13px; letter-spacing: -0.005em;
 }
 @media (max-width: 720px) { .nav-links { display: none; } }
 .nav-links a {
   color: var(--text-mute);
   text-decoration: none;
   transition: color 0.2s;
-  position: relative;
 }
 .nav-links a:hover { color: var(--accent); }
 .nav-cta {
@@ -164,19 +159,18 @@ h2.korean, h3.korean { font-family: var(--sans); font-weight: 600; line-height: 
   padding: 0.55rem 1rem;
   background: var(--accent);
   color: var(--bg);
-  font-family: var(--mono);
-  font-weight: 600; font-size: 12px;
-  letter-spacing: 0.08em; text-transform: uppercase;
+  font-family: var(--sans);
+  font-weight: 700; font-size: 13px;
+  letter-spacing: -0.005em;
   text-decoration: none;
   border-radius: 2px;
   transition: transform 0.18s ease, box-shadow 0.18s ease;
-  box-shadow: 0 0 0 0 rgba(255, 92, 43, 0);
 }
 .nav-cta:hover {
   transform: translateY(-1px);
   box-shadow: 0 8px 20px -8px rgba(255, 92, 43, 0.6);
 }
-.nav-cta::after { content: "→"; transition: transform 0.2s; }
+.nav-cta::after { content: "→"; transition: transform 0.2s; font-family: var(--sans); font-weight: 400; }
 .nav-cta:hover::after { transform: translateX(2px); }
 
 /* ==========================================================
@@ -189,11 +183,9 @@ h2.korean, h3.korean { font-family: var(--sans); font-weight: 600; line-height: 
   overflow: hidden;
 }
 .hero::before {
-  /* Dotted grid */
   content: "";
   position: absolute; inset: 0;
-  background-image:
-    radial-gradient(circle, var(--line) 1px, transparent 1px);
+  background-image: radial-gradient(circle, var(--line) 1px, transparent 1px);
   background-size: 32px 32px;
   background-position: -16px -16px;
   opacity: 0.5;
@@ -204,14 +196,14 @@ h2.korean, h3.korean { font-family: var(--sans); font-weight: 600; line-height: 
 .hero-grid {
   display: grid;
   grid-template-columns: 1fr;
-  gap: 3rem;
+  gap: 2.6rem;
   position: relative;
   z-index: 2;
 }
 .hero-chip-row {
-  display: flex; align-items: center; gap: 1.2rem;
+  display: flex; align-items: center; flex-wrap: wrap; gap: 1rem;
   font-family: var(--mono);
-  font-size: 12px; letter-spacing: 0.1em;
+  font-size: 11.5px; letter-spacing: 0.1em;
   color: var(--text-mute);
   text-transform: uppercase;
 }
@@ -235,43 +227,47 @@ h2.korean, h3.korean { font-family: var(--sans); font-weight: 600; line-height: 
 }
 
 .hero h1 {
-  font-family: var(--serif);
-  font-weight: 320;
-  font-size: clamp(2.8rem, 7.2vw, 6.4rem);
-  line-height: 0.96;
-  letter-spacing: -0.035em;
-  font-feature-settings: "ss01", "ss02";
-  font-variation-settings: "opsz" 120, "SOFT" 50;
+  font-family: var(--display-kr);
+  font-weight: 700;
+  font-size: clamp(2.6rem, 6.6vw, 5.8rem);
+  line-height: 1.05;
+  letter-spacing: -0.045em;
+  word-break: keep-all;
 }
 .hero h1 .accent {
-  font-style: italic;
   color: var(--accent);
+  font-family: var(--serif);
+  font-style: italic;
+  font-weight: 400;
+  letter-spacing: -0.03em;
   font-variation-settings: "opsz" 120, "SOFT" 100, "WONK" 1;
 }
-.hero h1 .strike {
-  position: relative;
-  display: inline-block;
-  color: var(--text-faint);
-}
-.hero h1 .strike::after {
-  content: "";
-  position: absolute; left: -2%; right: -2%;
-  top: 55%; height: 4px;
-  background: var(--accent);
-  transform: rotate(-2deg);
+.hero h1 small {
+  display: block;
+  font-family: var(--serif);
+  font-weight: 320;
+  font-style: italic;
+  font-size: 0.42em;
+  color: var(--text-mute);
+  letter-spacing: -0.01em;
+  margin-top: 0.6em;
+  font-variation-settings: "opsz" 100, "SOFT" 50;
 }
 
 .hero-sub {
-  margin-top: 2.2rem;
+  margin-top: 0.8rem;
   font-family: var(--sans);
-  font-size: clamp(1.05rem, 1.3vw, 1.2rem);
+  font-size: clamp(1.05rem, 1.3vw, 1.18rem);
   color: var(--text-soft);
   max-width: 62ch;
-  line-height: 1.6;
-  font-weight: 350;
+  line-height: 1.65;
+  font-weight: 400;
+  letter-spacing: -0.012em;
+  word-break: keep-all;
 }
+.hero-sub strong { color: var(--text); font-weight: 600; }
 .hero-meta {
-  margin-top: 2.6rem;
+  margin-top: 1.5rem;
   display: flex; align-items: center; flex-wrap: wrap; gap: 1.5rem;
 }
 .hero-cta {
@@ -279,25 +275,25 @@ h2.korean, h3.korean { font-family: var(--sans); font-weight: 600; line-height: 
   padding: 0.95rem 1.6rem;
   background: var(--accent);
   color: var(--bg);
-  font-family: var(--mono);
-  font-weight: 600; font-size: 13px;
-  letter-spacing: 0.1em; text-transform: uppercase;
+  font-family: var(--sans);
+  font-weight: 700; font-size: 14px;
+  letter-spacing: -0.005em;
   text-decoration: none;
   border-radius: 2px;
   transition: all 0.22s ease;
-  position: relative;
 }
 .hero-cta:hover {
   background: var(--accent-glow);
   box-shadow: 0 14px 30px -10px rgba(255, 92, 43, 0.55);
   transform: translateY(-2px);
 }
-.hero-cta::after { content: "↗"; font-family: var(--sans); transition: transform 0.22s; }
+.hero-cta::after { content: "↗"; transition: transform 0.22s; }
 .hero-cta:hover::after { transform: translate(2px, -2px); }
 .hero-cta-secondary {
   display: inline-flex; align-items: center; gap: 0.5rem;
-  font-family: var(--mono);
-  font-size: 12px; letter-spacing: 0.1em; text-transform: uppercase;
+  font-family: var(--sans);
+  font-weight: 500;
+  font-size: 13.5px;
   color: var(--text-soft);
   text-decoration: none;
   padding: 0.6rem 0;
@@ -310,7 +306,7 @@ h2.korean, h3.korean { font-family: var(--sans); font-weight: 600; line-height: 
 }
 
 .hero-stats {
-  margin-top: clamp(3rem, 7vh, 5rem);
+  margin-top: clamp(2.5rem, 6vh, 4rem);
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   gap: 1px;
@@ -328,13 +324,15 @@ h2.korean, h3.korean { font-family: var(--sans); font-weight: 600; line-height: 
   line-height: 1;
   color: var(--accent);
   font-feature-settings: "ss01";
+  font-weight: 400;
 }
 .hero-stat-label {
   margin-top: 0.6rem;
-  font-family: var(--mono);
-  font-size: 11px; letter-spacing: 0.1em;
+  font-family: var(--sans);
+  font-size: 12px;
   color: var(--text-mute);
-  text-transform: uppercase;
+  font-weight: 500;
+  letter-spacing: -0.005em;
 }
 
 /* ==========================================================
@@ -363,13 +361,21 @@ section + section { border-top: 1px solid var(--line-soft); }
   width: fit-content;
 }
 .section-title {
-  font-family: var(--serif);
-  font-weight: 350;
-  font-size: clamp(2rem, 4vw, 3.2rem);
-  letter-spacing: -0.03em;
-  line-height: 1.1;
+  font-family: var(--display-kr);
+  font-weight: 700;
+  font-size: clamp(1.9rem, 3.7vw, 2.95rem);
+  letter-spacing: -0.035em;
+  line-height: 1.18;
+  word-break: keep-all;
 }
-.section-title .accent { color: var(--accent); font-style: italic; }
+.section-title .accent {
+  color: var(--accent);
+  font-family: var(--serif);
+  font-style: italic;
+  font-weight: 400;
+  font-variation-settings: "opsz" 100, "WONK" 1;
+  letter-spacing: -0.02em;
+}
 
 /* ==========================================================
    THE PROBLEM
@@ -405,15 +411,17 @@ section + section { border-top: 1px solid var(--line-soft); }
 .problem-title {
   margin-top: 1rem;
   font-family: var(--sans);
-  font-weight: 600;
-  font-size: 1.1rem;
+  font-weight: 700;
+  font-size: 1.12rem;
+  letter-spacing: -0.015em;
   color: var(--text);
 }
 .problem-body {
   margin-top: 0.7rem;
-  color: var(--text-mute);
-  font-size: 0.95rem;
-  line-height: 1.65;
+  color: var(--text-soft);
+  font-size: 0.94rem;
+  line-height: 1.7;
+  word-break: keep-all;
 }
 .problem-tag {
   margin-top: 1.3rem;
@@ -429,113 +437,359 @@ section + section { border-top: 1px solid var(--line-soft); }
 }
 
 /* ==========================================================
-   SOLUTION PREVIEW
+   PULL QUOTE
    ========================================================== */
-.solution-preview {
-  display: grid;
-  grid-template-columns: 1fr 1.4fr;
-  gap: 3rem;
-  align-items: center;
-}
-@media (max-width: 860px) { .solution-preview { grid-template-columns: 1fr; } }
-
-.solution-points li {
-  list-style: none;
-  padding: 1.1rem 0;
+.pull {
+  padding: clamp(5rem, 12vh, 8rem) 0;
+  border-top: 1px solid var(--line-soft);
   border-bottom: 1px solid var(--line-soft);
+  text-align: center;
+  position: relative;
+}
+.pull::before, .pull::after {
+  content: "";
+  position: absolute; left: 50%; transform: translateX(-50%);
+  width: 60px; height: 1px;
+  background: var(--accent);
+}
+.pull::before { top: 0; }
+.pull::after  { bottom: 0; }
+.pull-text {
+  font-family: var(--display-kr);
+  font-weight: 500;
+  font-size: clamp(1.55rem, 3.4vw, 2.55rem);
+  line-height: 1.35;
+  letter-spacing: -0.038em;
+  max-width: 28ch;
+  margin: 0 auto;
+  color: var(--text);
+  word-break: keep-all;
+}
+.pull-text .hi {
+  color: var(--accent);
+  font-family: var(--serif);
+  font-style: italic;
+  font-weight: 400;
+  font-variation-settings: "WONK" 1;
+}
+.pull-meta {
+  margin-top: 2rem;
+  font-family: var(--sans);
+  font-size: 13px;
+  color: var(--text-mute);
+  font-weight: 500;
+  letter-spacing: -0.005em;
+}
+
+/* ==========================================================
+   GOAL / EXPECTED OUTCOMES (from PPTX)
+   ========================================================== */
+.goals {
   display: grid;
-  grid-template-columns: 28px 1fr;
-  gap: 1rem;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+}
+@media (max-width: 720px) { .goals { grid-template-columns: 1fr; } }
+.goal-block {
+  background: var(--bg-elev);
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  padding: 2rem 1.8rem;
+  position: relative;
+  overflow: hidden;
+}
+.goal-block::before {
+  content: ""; position: absolute;
+  top: 0; left: 0; width: 3px; height: 100%;
+  background: var(--accent);
+}
+.goal-block.b2::before { background: var(--mint); }
+.goal-label {
+  font-family: var(--mono);
+  font-size: 11px; letter-spacing: 0.18em;
+  color: var(--accent);
+  text-transform: uppercase;
+  font-weight: 500;
+}
+.goal-block.b2 .goal-label { color: var(--mint); }
+.goal-title {
+  margin-top: 0.7rem;
+  font-family: var(--display-kr);
+  font-weight: 700;
+  font-size: 1.35rem;
+  letter-spacing: -0.025em;
+  line-height: 1.3;
+}
+.goal-list {
+  margin-top: 1.4rem;
+  list-style: none;
+}
+.goal-list li {
+  padding: 0.6rem 0;
+  border-top: 1px solid var(--line-soft);
+  display: flex; align-items: start; gap: 0.8rem;
+  color: var(--text-soft);
+  font-size: 0.95rem;
+  line-height: 1.6;
+  word-break: keep-all;
+}
+.goal-list li::before {
+  content: "→";
+  color: var(--accent);
+  font-weight: 700;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+.goal-block.b2 .goal-list li::before { color: var(--mint); }
+
+/* ==========================================================
+   REAL USE CASE (case study)
+   ========================================================== */
+.case {
+  display: grid;
+  grid-template-columns: 1fr 1.3fr;
+  gap: 3rem;
+  margin-bottom: 4rem;
   align-items: start;
 }
-.solution-points li:last-child { border-bottom: none; }
-.solution-points .check {
-  width: 22px; height: 22px;
-  border-radius: 50%;
-  background: var(--accent);
-  color: var(--bg);
+@media (max-width: 860px) { .case { grid-template-columns: 1fr; gap: 2rem; } }
+.case-meta {
+  position: sticky; top: 7rem;
+}
+.case-tag {
+  display: inline-flex; align-items: center; gap: 0.5rem;
   font-family: var(--mono);
-  font-size: 12px; font-weight: 700;
-  display: inline-flex; align-items: center; justify-content: center;
-  margin-top: 2px;
+  font-size: 10.5px; letter-spacing: 0.15em;
+  color: var(--accent);
+  text-transform: uppercase;
+  padding: 0.35rem 0.7rem;
+  border: 1px solid var(--accent);
+  border-radius: 2px;
+  margin-bottom: 1.2rem;
 }
-.solution-points strong {
-  font-family: var(--sans);
-  font-weight: 600;
-  color: var(--text);
-  display: block;
-  margin-bottom: 0.2rem;
+.case-title {
+  font-family: var(--display-kr);
+  font-weight: 700;
+  font-size: clamp(1.4rem, 2.4vw, 2rem);
+  letter-spacing: -0.03em;
+  line-height: 1.2;
+  margin-bottom: 0.8rem;
+  word-break: keep-all;
 }
-.solution-points span {
-  color: var(--text-mute);
-  font-size: 0.93rem;
+.case-product {
+  font-family: var(--serif);
+  font-style: italic;
+  font-weight: 350;
+  font-size: 1.05rem;
+  color: var(--accent);
+  margin-bottom: 1.2rem;
+  font-variation-settings: "opsz" 50;
+}
+.case-quote {
+  margin-top: 1.3rem;
+  padding: 1.2rem 1.3rem;
+  background: var(--bg-elev);
+  border-left: 3px solid var(--accent);
+  border-radius: 0 4px 4px 0;
+  font-family: var(--display-kr);
+  font-style: normal;
+  font-weight: 500;
+  font-size: 1rem;
+  line-height: 1.55;
+  color: var(--text-soft);
+  letter-spacing: -0.02em;
+  word-break: keep-all;
+}
+.case-body {
+  margin-top: 1.2rem;
+  color: var(--text-soft);
+  font-size: 0.95rem;
+  line-height: 1.7;
+  word-break: keep-all;
 }
 
-/* Mock UI panel */
-.mock {
-  position: relative;
+/* Mock UI (case study) */
+.case-mock {
   border: 1px solid var(--line);
   background: var(--bg-elev);
   border-radius: 6px;
   overflow: hidden;
-  box-shadow:
-    0 1px 0 rgba(255,255,255,0.04) inset,
-    0 30px 60px -30px rgba(0,0,0,0.8);
+  box-shadow: 0 1px 0 rgba(255,255,255,0.04) inset, 0 30px 60px -30px rgba(0,0,0,0.85);
 }
 .mock-bar {
   display: flex; align-items: center; gap: 0.8rem;
-  padding: 0.6rem 0.9rem;
+  padding: 0.65rem 0.9rem;
   background: var(--bg-elev-2);
   border-bottom: 1px solid var(--line);
   font-family: var(--mono);
-  font-size: 10px; letter-spacing: 0.08em;
+  font-size: 10px; letter-spacing: 0.06em;
   color: var(--text-mute);
-  text-transform: uppercase;
 }
 .mock-dots { display: flex; gap: 5px; }
 .mock-dots span { width: 9px; height: 9px; border-radius: 50%; background: var(--line); }
 .mock-dots span:nth-child(1) { background: #ff5f57; }
 .mock-dots span:nth-child(2) { background: #ffbd2e; }
 .mock-dots span:nth-child(3) { background: #28c941; }
-.mock-body {
+.mock-bar .url { color: var(--text-mute); margin-left: 0.5rem; }
+
+.mock-toolbar {
+  display: flex; align-items: center; gap: 0.8rem;
+  padding: 0.7rem 0.9rem;
+  border-bottom: 1px solid var(--line);
+  background: var(--bg);
+  font-family: var(--sans);
+  font-size: 11px;
+  flex-wrap: wrap;
+}
+.mock-tag {
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 0.25rem 0.55rem;
+  border-radius: 2px;
+  background: var(--bg-elev);
+  border: 1px solid var(--line);
+  color: var(--text-soft);
+  font-weight: 500;
+  font-size: 10.5px;
+}
+.mock-tag.toggle { background: var(--accent); color: var(--bg); border-color: var(--accent); }
+
+.mock-search-rows {
+  padding: 0.9rem 1rem;
+  background: var(--bg);
+  border-bottom: 1px solid var(--line);
+  display: grid;
+  gap: 0.6rem;
+}
+.mock-srow {
+  display: grid;
+  grid-template-columns: auto 1fr 1fr auto;
+  gap: 0.5rem;
+  align-items: center;
+  padding: 0.5rem 0.7rem;
+  background: var(--bg-elev);
+  border-left: 3px solid;
+  border-radius: 0 3px 3px 0;
+  font-size: 11.5px;
+  font-family: var(--mono);
+}
+.mock-srow .label {
+  font-family: var(--sans); font-weight: 600; font-size: 10.5px;
+  color: var(--text-mute);
+  letter-spacing: -0.005em;
+  white-space: nowrap;
+}
+.mock-srow .lang {
+  font-family: var(--mono); color: var(--text-mute);
+  font-size: 9.5px; padding: 1px 4px; border: 1px solid var(--line); border-radius: 2px;
+}
+.mock-srow input {
+  background: transparent; border: none;
+  color: var(--text); font-family: var(--sans); font-weight: 500;
+  font-size: 12px; pointer-events: none;
+}
+.mock-srow .term {
+  font-family: var(--sans); color: var(--text);
+  font-size: 12px; font-weight: 500;
+}
+.mock-srow.r0 { border-color: #ffaa00; }
+.mock-srow.r1 { border-color: #3b82f6; }
+.mock-srow.r2 { border-color: #10b981; }
+.mock-srow.r3 { border-color: #a855f7; }
+.mock-srow.r4 { border-color: #f97316; }
+
+.mock-pills {
+  padding: 0.8rem 1rem;
+  display: flex; flex-wrap: wrap; gap: 0.4rem;
+  background: var(--bg);
+  border-bottom: 1px solid var(--line);
+}
+.mock-pill {
+  font-family: var(--mono);
+  font-size: 10.5px;
+  padding: 0.25rem 0.55rem;
+  border-radius: 999px;
+  border: 1px solid currentColor;
+  background: transparent;
+  font-weight: 500;
+}
+.mock-pill b { color: inherit; margin-right: 4px; }
+.mock-pill.p0 { color: #ffaa00; }
+.mock-pill.p1 { color: #3b82f6; }
+.mock-pill.p2 { color: #10b981; }
+.mock-pill.p3 { color: #a855f7; }
+.mock-pill.p4 { color: #f97316; }
+
+.mock-content {
   display: grid;
   grid-template-columns: 1fr 1fr;
+  background: #1a1614;
+  min-height: 280px;
 }
 .mock-panel {
-  padding: 1.1rem 1rem;
+  padding: 1.4rem 1.1rem;
   border-right: 1px solid var(--line);
   font-family: var(--sans);
-  font-size: 12.5px;
-  line-height: 1.7;
+  font-size: 13px;
+  line-height: 1.75;
+  color: #d4ccbd;
   position: relative;
-  min-height: 220px;
+  letter-spacing: -0.005em;
 }
 .mock-panel:last-child { border-right: none; }
 .mock-panel-tag {
   font-family: var(--mono);
-  font-size: 9px; letter-spacing: 0.1em;
+  font-size: 9.5px; letter-spacing: 0.08em;
   color: var(--text-mute);
   text-transform: uppercase;
-  margin-bottom: 0.7rem;
+  margin-bottom: 1rem;
+  padding-bottom: 0.6rem;
+  border-bottom: 1px solid var(--line);
 }
-.mock-hl { padding: 0 3px; border-radius: 2px; }
-.mock-hl.ko { background: rgba(255,0,51,0.42); text-decoration: underline wavy var(--critical); text-decoration-thickness: 1.5px; text-underline-offset: 2px; }
-.mock-hl.s0 { background: rgba(255,170,0,0.5); }
-.mock-hl.s1 { background: rgba(59,130,246,0.45); color: #fff; }
-.mock-hl.s5 { background: rgba(236,72,153,0.5); color: #fff; }
+.mock-h {
+  font-family: var(--display-kr);
+  font-weight: 700;
+  font-size: 1.45rem;
+  line-height: 1.15;
+  letter-spacing: -0.02em;
+  color: var(--text);
+  margin: 0.4em 0 0.5em;
+  word-break: keep-all;
+}
+.mock-h .ja { font-weight: 700; }
+.mock-h .en { font-family: var(--serif); font-weight: 500; }
+
+.mock-hl { padding: 1px 4px; border-radius: 2px; }
+.mock-hl.ko { background: rgba(255,0,51,0.42); text-decoration: underline wavy var(--critical); text-decoration-thickness: 1.5px; text-underline-offset: 2px; color: #fff; }
+.mock-hl.s0 { background: rgba(255,170,0,0.55); color: #1a1614; font-weight: 600; }
+.mock-hl.s1 { background: rgba(59,130,246,0.5); color: #fff; font-weight: 500; }
+.mock-hl.s2 { background: rgba(16,185,129,0.5); color: #fff; font-weight: 500; }
+.mock-hl.s3 { background: rgba(168,85,247,0.5); color: #fff; font-weight: 500; }
+.mock-hl.s4 { background: rgba(249,115,22,0.6); color: #fff; font-weight: 500; }
+
 .mock-minimap {
   position: absolute; right: 0; top: 0; bottom: 0;
   width: 10px;
-  background: rgba(0,0,0,0.15);
+  background: rgba(0,0,0,0.18);
+  border-left: 1px solid var(--line);
 }
 .mock-minimap span {
   position: absolute; left: 0; right: 0;
   height: 3px;
 }
-.mock-minimap span.k { background: var(--critical); box-shadow: 0 0 4px var(--critical); }
+.mock-minimap span.k { background: var(--critical); box-shadow: 0 0 4px var(--critical); height: 4px; animation: pulse-mark 1.4s ease-in-out infinite; }
+.mock-minimap span.k::before { content: '⚠'; position: absolute; right: 100%; top: 50%; transform: translateY(-50%); font-size: 8px; color: var(--critical); }
+@keyframes pulse-mark {
+  0%, 100% { opacity: 1; } 50% { opacity: 0.45; }
+}
 .mock-minimap span.s0 { background: #ffaa00; }
 .mock-minimap span.s1 { background: #3b82f6; }
-.mock-minimap span.s5 { background: #ec4899; }
+.mock-minimap span.s2 { background: #10b981; }
+.mock-minimap span.s3 { background: #a855f7; }
+.mock-minimap span.s4 { background: #f97316; }
+.mock-minimap span.um::before {
+  content: '▶'; position: absolute; right: 100%; top: 50%;
+  transform: translateY(-50%); font-size: 6.5px; color: var(--critical);
+}
 
 /* ==========================================================
    FEATURE GRID
@@ -585,22 +839,26 @@ section + section { border-top: 1px solid var(--line-soft); }
 }
 .feature-title {
   margin-top: 0.7rem;
-  font-family: var(--serif);
-  font-weight: 350;
-  font-size: clamp(1.4rem, 2vw, 1.8rem);
-  letter-spacing: -0.02em;
-  line-height: 1.2;
+  font-family: var(--display-kr);
+  font-weight: 700;
+  font-size: clamp(1.3rem, 1.85vw, 1.55rem);
+  letter-spacing: -0.025em;
+  line-height: 1.3;
+  word-break: keep-all;
 }
 .feature-title em {
   font-style: italic;
   color: var(--accent);
+  font-family: var(--serif);
+  font-weight: 400;
   font-variation-settings: "WONK" 1;
 }
 .feature-body {
-  margin-top: 1rem;
-  color: var(--text-mute);
+  margin-top: 0.9rem;
+  color: var(--text-soft);
   font-size: 0.95rem;
-  line-height: 1.65;
+  line-height: 1.7;
+  word-break: keep-all;
 }
 .feature-kbd {
   margin-top: 1.3rem;
@@ -617,12 +875,12 @@ section + section { border-top: 1px solid var(--line-soft); }
 }
 .feature-pillrow {
   margin-top: 1.4rem;
-  display: flex; gap: 0.5rem; flex-wrap: wrap;
+  display: flex; gap: 0.4rem; flex-wrap: wrap;
 }
 .fpill {
   font-family: var(--mono);
-  font-size: 11px;
-  padding: 0.25rem 0.55rem;
+  font-size: 10.5px;
+  padding: 0.22rem 0.5rem;
   border-radius: 999px;
   background: var(--bg);
   border: 1px solid currentColor;
@@ -637,49 +895,7 @@ section + section { border-top: 1px solid var(--line-soft); }
 .fpill.p6 { color: #06b6d4; }
 .fpill.p7 { color: #84cc16; }
 .fpill.p8 { color: #ef4444; }
-.fpill.p9 { color: var(--text-faint); background: #1f2937; border-color: #1f2937; }
-
-/* ==========================================================
-   PULL QUOTE
-   ========================================================== */
-.pull {
-  padding: clamp(5rem, 12vh, 8rem) 0;
-  border-top: 1px solid var(--line-soft);
-  border-bottom: 1px solid var(--line-soft);
-  text-align: center;
-  position: relative;
-}
-.pull::before, .pull::after {
-  content: "";
-  position: absolute; left: 50%; transform: translateX(-50%);
-  width: 60px; height: 1px;
-  background: var(--accent);
-}
-.pull::before { top: 0; }
-.pull::after  { bottom: 0; }
-.pull-text {
-  font-family: var(--serif);
-  font-weight: 320;
-  font-style: italic;
-  font-size: clamp(1.6rem, 3.6vw, 2.8rem);
-  line-height: 1.25;
-  letter-spacing: -0.025em;
-  max-width: 24ch;
-  margin: 0 auto;
-  color: var(--text);
-  font-variation-settings: "opsz" 100, "SOFT" 80;
-}
-.pull-text .hi {
-  color: var(--accent);
-  font-variation-settings: "opsz" 100, "SOFT" 100, "WONK" 1;
-}
-.pull-meta {
-  margin-top: 2rem;
-  font-family: var(--mono);
-  font-size: 12px; letter-spacing: 0.15em;
-  color: var(--text-mute);
-  text-transform: uppercase;
-}
+.fpill.p9 { color: #f5efe4; background: #1f2937; border-color: #1f2937; }
 
 /* ==========================================================
    ARCHITECTURE DIAGRAM
@@ -692,22 +908,26 @@ section + section { border-top: 1px solid var(--line-soft); }
 }
 @media (max-width: 860px) { .arch { grid-template-columns: 1fr; } }
 .arch-text h3 {
-  font-family: var(--serif);
-  font-weight: 350;
-  font-size: clamp(1.6rem, 2.6vw, 2.2rem);
-  line-height: 1.1;
-  letter-spacing: -0.02em;
+  font-family: var(--display-kr);
+  font-weight: 700;
+  font-size: clamp(1.5rem, 2.4vw, 2rem);
+  line-height: 1.25;
+  letter-spacing: -0.028em;
   margin-bottom: 1.2rem;
+  word-break: keep-all;
 }
-.arch-text p { color: var(--text-soft); margin-bottom: 1rem; max-width: 50ch; }
+.arch-text p { color: var(--text-soft); margin-bottom: 1rem; max-width: 50ch; word-break: keep-all; line-height: 1.7; }
+.arch-text code { font-family: var(--mono); color: var(--accent); font-size: 0.9em; }
+.arch-text strong { color: var(--text); font-weight: 600; }
+
 .arch-list {
   margin-top: 1.5rem;
   display: grid;
-  gap: 0.6rem;
-  font-family: var(--mono);
-  font-size: 12px;
+  gap: 0.5rem;
 }
 .arch-list dt {
+  font-family: var(--mono);
+  font-size: 11px;
   color: var(--accent);
   letter-spacing: 0.1em;
   text-transform: uppercase;
@@ -717,7 +937,8 @@ section + section { border-top: 1px solid var(--line-soft); }
   color: var(--text-soft);
   margin-bottom: 0.5rem;
   font-family: var(--sans);
-  font-size: 14px;
+  font-size: 13.5px;
+  letter-spacing: -0.005em;
 }
 
 .diagram {
@@ -787,6 +1008,19 @@ section + section { border-top: 1px solid var(--line-soft); }
   align-items: start;
 }
 @media (max-width: 860px) { .code-section { grid-template-columns: 1fr; } }
+.code-section h3 {
+  font-family: var(--display-kr);
+  font-weight: 700;
+  font-size: 1.5rem;
+  letter-spacing: -0.025em;
+  margin-bottom: 1rem;
+}
+.code-section p {
+  color: var(--text-soft);
+  margin-bottom: 1rem;
+  word-break: keep-all;
+  line-height: 1.7;
+}
 .code-block {
   background: var(--bg-elev);
   border: 1px solid var(--line);
@@ -819,7 +1053,7 @@ section + section { border-top: 1px solid var(--line-soft); }
 .c-fn  { color: var(--gold); }
 
 /* ==========================================================
-   ADOPTION (3-STEP)
+   ADOPTION
    ========================================================== */
 .steps {
   display: grid;
@@ -854,19 +1088,22 @@ section + section { border-top: 1px solid var(--line-soft); }
 }
 .step-title {
   margin-top: 1rem;
-  font-family: var(--sans);
-  font-weight: 600;
-  font-size: 1.15rem;
+  font-family: var(--display-kr);
+  font-weight: 700;
+  font-size: 1.18rem;
+  letter-spacing: -0.02em;
 }
 .step-body {
   margin-top: 0.7rem;
-  color: var(--text-mute);
+  color: var(--text-soft);
   font-size: 0.93rem;
-  line-height: 1.65;
+  line-height: 1.7;
+  word-break: keep-all;
 }
+.step-body code { font-family: var(--mono); color: var(--accent); font-size: 0.9em; }
 
 /* ==========================================================
-   BIG NUMBERS / BENTO
+   NUMBERS / BENTO
    ========================================================== */
 .bento {
   display: grid;
@@ -908,21 +1145,23 @@ section + section { border-top: 1px solid var(--line-soft); }
 }
 .cell.b1 .cell-val { color: var(--accent); }
 .cell-label {
-  font-family: var(--mono);
-  font-size: 11px; letter-spacing: 0.12em;
+  font-family: var(--sans);
+  font-weight: 600;
+  font-size: 12px;
   color: var(--text-mute);
-  text-transform: uppercase;
+  letter-spacing: -0.005em;
   margin-top: 0.6rem;
 }
 .cell-desc {
   margin-top: 1rem;
   color: var(--text-soft);
   font-size: 0.92rem;
-  line-height: 1.6;
+  line-height: 1.65;
+  word-break: keep-all;
 }
 
 /* ==========================================================
-   TECH STACK STRIP
+   TECH STACK
    ========================================================== */
 .stack {
   display: grid;
@@ -939,15 +1178,16 @@ section + section { border-top: 1px solid var(--line-soft); }
 }
 .stack-icon {
   font-family: var(--mono);
-  font-size: 11px;
+  font-size: 10.5px;
   color: var(--accent);
-  letter-spacing: 0.1em;
+  letter-spacing: 0.12em;
 }
 .stack-name {
   margin-top: 0.5rem;
   font-family: var(--sans);
-  font-weight: 600;
+  font-weight: 700;
   font-size: 0.95rem;
+  letter-spacing: -0.01em;
 }
 .stack-desc {
   margin-top: 0.3rem;
@@ -972,8 +1212,7 @@ section + section { border-top: 1px solid var(--line-soft); }
 .final::before {
   content: "";
   position: absolute; inset: 0;
-  background-image:
-    radial-gradient(circle, var(--line) 1px, transparent 1px);
+  background-image: radial-gradient(circle, var(--line) 1px, transparent 1px);
   background-size: 40px 40px;
   opacity: 0.4;
   mask-image: radial-gradient(ellipse at center, black 30%, transparent 75%);
@@ -981,16 +1220,18 @@ section + section { border-top: 1px solid var(--line-soft); }
 }
 .final-inner { position: relative; z-index: 2; }
 .final h2 {
-  font-family: var(--serif);
-  font-weight: 320;
-  font-size: clamp(2.4rem, 6vw, 5rem);
-  line-height: 1.04;
-  letter-spacing: -0.035em;
-  font-variation-settings: "opsz" 120, "SOFT" 60;
+  font-family: var(--display-kr);
+  font-weight: 700;
+  font-size: clamp(2.2rem, 5.6vw, 4.6rem);
+  line-height: 1.15;
+  letter-spacing: -0.04em;
+  word-break: keep-all;
 }
 .final h2 .accent {
   color: var(--accent);
+  font-family: var(--serif);
   font-style: italic;
+  font-weight: 400;
   font-variation-settings: "opsz" 120, "WONK" 1;
 }
 .final p {
@@ -998,6 +1239,8 @@ section + section { border-top: 1px solid var(--line-soft); }
   max-width: 50ch;
   color: var(--text-soft);
   font-size: 1.05rem;
+  line-height: 1.7;
+  word-break: keep-all;
 }
 .final-cta-row {
   margin-top: 2.6rem;
@@ -1010,10 +1253,10 @@ section + section { border-top: 1px solid var(--line-soft); }
 footer {
   padding: 3rem 0 2.5rem;
   border-top: 1px solid var(--line);
-  font-family: var(--mono);
-  font-size: 11.5px;
+  font-family: var(--sans);
+  font-size: 12.5px;
   color: var(--text-mute);
-  letter-spacing: 0.05em;
+  letter-spacing: -0.005em;
 }
 .foot-grid {
   display: grid;
@@ -1039,27 +1282,28 @@ footer {
   transition: color 0.15s;
   font-family: var(--sans);
   font-size: 13px;
-  letter-spacing: 0;
+  font-weight: 500;
 }
 .foot-col a:hover { color: var(--accent); }
 .foot-tagline {
-  font-family: var(--serif);
-  font-size: 1.05rem;
+  font-family: var(--display-kr);
+  font-size: 1.1rem;
+  font-weight: 500;
   color: var(--text-soft);
-  font-style: italic;
-  font-variation-settings: "opsz" 36;
-  letter-spacing: 0;
+  letter-spacing: -0.02em;
+  word-break: keep-all;
+  line-height: 1.5;
 }
 .foot-bottom {
   display: flex; justify-content: space-between; align-items: center;
   padding-top: 1.5rem;
   border-top: 1px solid var(--line-soft);
   flex-wrap: wrap; gap: 1rem;
+  font-family: var(--mono);
+  font-size: 11.5px;
 }
 
-/* ==========================================================
-   ANIMATIONS — page load reveal
-   ========================================================== */
+/* Animations */
 @keyframes fade-up {
   from { opacity: 0; transform: translateY(20px); }
   to   { opacity: 1; transform: translateY(0); }
@@ -1071,7 +1315,6 @@ footer {
 .reveal-4 { animation-delay: 0.48s; }
 .reveal-5 { animation-delay: 0.66s; }
 
-/* Respect reduced motion */
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
     animation-duration: 0.01ms !important;
@@ -1082,9 +1325,7 @@ footer {
 </head>
 <body>
 
-<!-- =========================================================
-     NAV
-     ========================================================= -->
+<!-- NAV -->
 <nav class="nav">
   <div class="nav-inner">
     <a href="#" class="brand">
@@ -1093,19 +1334,17 @@ footer {
       <span class="brand-meta">v1.0 · 2026</span>
     </a>
     <div class="nav-links">
-      <a href="#problem">Problem</a>
-      <a href="#features">Features</a>
-      <a href="#arch">Architecture</a>
-      <a href="#numbers">Numbers</a>
-      <a href="#adopt">Adopt</a>
+      <a href="#problem">문제</a>
+      <a href="#cases">사용 사례</a>
+      <a href="#features">기능</a>
+      <a href="#arch">아키텍처</a>
+      <a href="#adopt">도입</a>
     </div>
-    <a href="https://blankers2.github.io/HTML-checker-dist/" class="nav-cta">Launch</a>
+    <a href="https://blankers2.github.io/HTML-checker-dist/" class="nav-cta">앱 실행</a>
   </div>
 </nav>
 
-<!-- =========================================================
-     HERO
-     ========================================================= -->
+<!-- HERO -->
 <header class="hero">
   <div class="wrap hero-grid">
     <div class="hero-chip-row reveal reveal-1">
@@ -1114,20 +1353,21 @@ footer {
     </div>
 
     <h1 class="reveal reveal-2">
-      번역 검수의<br>
-      <span class="accent">시간</span>을 되돌려드립니다.
+      번역 검수 효율을<br>
+      <span class="accent">극대화</span>하는 사내 QA 도구.
+      <small>HTML translation QA, reengineered.</small>
     </h1>
 
     <p class="hero-sub reveal reveal-3">
-      HTML 번역(EN/JA) 파일을 한국어 원본과 함께
-      <strong style="color: var(--text); font-weight: 500;">한 화면에서 동시 비교</strong>.
-      별도 설치 없이 Chrome에서 즉시 사용 가능한 사내 QA 도구입니다.
-      <br><span style="color: var(--text-mute);">2시간 수작업이 15분으로.</span>
+      EN / JA 번역본과 KO 원본을 한 화면에서 <strong>동시에 비교 · 검수</strong>합니다.
+      Chrome에서 별도 설치 없이 즉시 사용 가능한 사내 QA 도구.
+      <strong>TM 누락 · 오검수를 감소</strong>시키고 휴먼에러를 최소화합니다.
     </p>
 
     <div class="hero-meta reveal reveal-4">
       <a href="https://blankers2.github.io/HTML-checker-dist/" class="hero-cta">지금 사용하기</a>
-      <a href="#adopt" class="hero-cta-secondary">도입 가이드 보기</a>
+      <a href="#adopt" class="hero-cta-secondary">도입 가이드 →</a>
+      <a href="./MIGRATION.md" class="hero-cta-secondary">기술 문서 →</a>
     </div>
 
     <div class="hero-stats reveal reveal-5">
@@ -1137,40 +1377,38 @@ footer {
       </div>
       <div class="hero-stat">
         <div class="hero-stat-val">0</div>
-        <div class="hero-stat-label">Dependencies</div>
+        <div class="hero-stat-label">의존성 / 백엔드</div>
       </div>
       <div class="hero-stat">
         <div class="hero-stat-val">10</div>
         <div class="hero-stat-label">동시 검색 색상</div>
       </div>
       <div class="hero-stat">
-        <div class="hero-stat-val">∞</div>
-        <div class="hero-stat-label">Backend Required</div>
+        <div class="hero-stat-val">3<span style="color: var(--accent); font-size: 0.6em;">×</span></div>
+        <div class="hero-stat-label">EN · JA · KO 분할 비교</div>
       </div>
     </div>
   </div>
 </header>
 
-<!-- =========================================================
-     THE PROBLEM
-     ========================================================= -->
+<!-- THE PROBLEM -->
 <section id="problem">
   <div class="wrap">
     <div class="section-head">
       <div class="section-num">§01 · The Problem</div>
       <h2 class="section-title">
-        익숙한 검수 풍경,<br>
-        <span class="accent">10개 파일을</span> 동시에 띄워야 했던 그날들.
+        검수자가 매일 마주하는<br>
+        <span class="accent">세 가지</span> 비효율.
       </h2>
     </div>
 
     <div class="problems">
       <article class="problem">
         <div class="problem-num">01</div>
-        <div class="problem-title">한국어 누락 검출</div>
+        <div class="problem-title">미번역 한국어 누락</div>
         <p class="problem-body">
-          영어/일본어로 번역된 페이지에 한국어 문구가 섞여 들어와도
-          긴 페이지를 위에서 아래까지 일일이 스크롤하며 찾아야 했습니다.
+          영어/일본어로 번역된 페이지에 미번역 한국어 텍스트가
+          섞여 있어도 페이지 처음부터 끝까지 스크롤하며 눈으로 찾아야 했습니다.
           이미지로 가려진 텍스트는 거의 발견 불가능.
         </p>
         <span class="problem-tag">Human Error · High</span>
@@ -1178,22 +1416,22 @@ footer {
 
       <article class="problem">
         <div class="problem-num">02</div>
-        <div class="problem-title">TM 일관성 확인</div>
+        <div class="problem-title">TM 일관성 검수의 한계</div>
         <p class="problem-body">
-          "Cotton Foot Shampoo"가 본문 곳곳에서 동일하게 번역됐는지,
-          용어집(TM)과 어긋난 단어는 없는지 — 단어별로 Ctrl+F를
-          반복하며 두 창을 번갈아 봐야 했습니다.
+          브랜드명·옵션명·제품라인명이 공식 TM 기준대로
+          모든 위치에서 동일하게 번역됐는지 — 단어별로 Ctrl+F를
+          반복하며 두 창을 번갈아 보는 수밖에 없었습니다.
         </p>
         <span class="problem-tag">Toil · Repetitive</span>
       </article>
 
       <article class="problem">
         <div class="problem-num">03</div>
-        <div class="problem-title">원본 대조 비효율</div>
+        <div class="problem-title">KO 원본 대조의 비효율</div>
         <p class="problem-body">
-          번역본을 보다가 "이거 원본이 뭐였더라?"
-          → 한국어 원본 파일을 다시 열고 위치를 찾기까지 평균 30초.
-          하루 100번 반복하면 시간이 어디로 가는지 알 수 있습니다.
+          번역본 검수 중 "이거 원본은?"  → KO 원본 파일을 다시 열고
+          해당 위치 찾기까지 평균 30초. 하루 100번 반복하면 50분이
+          그 자리에서 사라집니다. 삭제 이미지 누락도 발견 어려움.
         </p>
         <span class="problem-tag">Context Switch · Costly</span>
       </article>
@@ -1201,150 +1439,293 @@ footer {
   </div>
 </section>
 
-<!-- =========================================================
-     PULL QUOTE
-     ========================================================= -->
+<!-- PULL QUOTE -->
 <section class="pull">
   <div class="wrap">
     <p class="pull-text">
-      검수 도구는 검수자의 <span class="hi">시간</span>을 아끼는
-      방향으로 진화해야 합니다.
+      검수 도구는 검수자의 <span class="hi">시간</span>을
+      아끼는 방향으로 진화해야 합니다.
     </p>
     <div class="pull-meta">— 이 도구를 만든 이유</div>
   </div>
 </section>
 
-<!-- =========================================================
-     SOLUTION PREVIEW
-     ========================================================= -->
-<section id="solution">
+<!-- GOAL & OUTCOME -->
+<section id="goals">
   <div class="wrap">
     <div class="section-head">
-      <div class="section-num">§02 · The Solution</div>
+      <div class="section-num">§02 · Goal & Outcome</div>
       <h2 class="section-title">
-        한 화면에서, <span class="accent">즉시</span>,<br>
-        검수자가 보고 싶은 것을 보여줍니다.
+        도구의 <span class="accent">목적</span>과<br>
+        기대 효과는 명확합니다.
       </h2>
     </div>
 
-    <div class="solution-preview">
-      <ul class="solution-points">
-        <li>
-          <span class="check">✓</span>
-          <div>
-            <strong>2분할 비교 + KR 원본 오버레이</strong>
-            <span>EN/JA를 좌우로 띄우고, 백틱 키 한 번이면 반대편이 KR 원본으로 즉시 전환.</span>
-          </div>
-        </li>
-        <li>
-          <span class="check">✓</span>
-          <div>
-            <strong>한국어 자동 검출 + 펄스 알림</strong>
-            <span>파일 로드 즉시 한국어를 찾아 드롭다운으로 자동 노출. 미니맵에 ⚠ 마커 + 펄스로 강조.</span>
-          </div>
-        </li>
-        <li>
-          <span class="check">✓</span>
-          <div>
-            <strong>TM 다중 검색 (최대 10색)</strong>
-            <span>검색어 10개를 동시에 색상별로 표시. Pill 클릭으로 결과 필터링.</span>
-          </div>
-        </li>
-        <li>
-          <span class="check">✓</span>
-          <div>
-            <strong>EN/JA 매칭 차이 시각화</strong>
-            <span>같은 검색어가 한쪽에만 매칭된 줄은 ▶ 표시로 즉시 발견.</span>
-          </div>
-        </li>
-        <li>
-          <span class="check">✓</span>
-          <div>
-            <strong>검색 히스토리 자동 저장</strong>
-            <span>localStorage에 최근 20개 스냅샷. 새로고침 후에도 보존.</span>
-          </div>
-        </li>
-      </ul>
+    <div class="goals">
+      <div class="goal-block">
+        <div class="goal-label">PURPOSE · 목적</div>
+        <h3 class="goal-title">검수(QC) 업무 효율 향상</h3>
+        <ul class="goal-list">
+          <li>EN / JA 번역본과 KO 원본 간 비교 검수 편의성 강화</li>
+          <li>번역 누락 및 미번역 한국어 등 휴먼에러 최소화</li>
+          <li>검수 시간 단축으로 납품 일정 안정화</li>
+        </ul>
+      </div>
 
-      <div class="mock">
-        <div class="mock-bar">
-          <div class="mock-dots"><span></span><span></span><span></span></div>
-          <span>HTML Checker — notice_544358</span>
-        </div>
-        <div class="mock-body">
-          <div class="mock-panel">
-            <div class="mock-panel-tag">🇺🇸 EN · NOTICE.HTML</div>
-            ON:THE BODY <span class="mock-hl s1">Cotton Foot Shampoo</span><br>
-            Renewal shipping notice<br><br>
-            <span class="mock-hl s0">Wash Your Feet</span> · Foot Cleansing Care<br>
-            <span class="mock-hl s5">Foot Shampoo</span> · 30,000 KRW<br><br>
-            <span class="mock-hl ko">출시기념</span> 한정 패키지<br>
-            <div class="mock-minimap">
-              <span class="k" style="top: 70%"></span>
-              <span class="s0" style="top: 28%"></span>
-              <span class="s1" style="top: 8%"></span>
-              <span class="s5" style="top: 42%"></span>
-            </div>
-          </div>
-          <div class="mock-panel">
-            <div class="mock-panel-tag">🇯🇵 JA · NOTICE.HTML</div>
-            オンザボディ <span class="mock-hl s1">コットンフットシャンプー</span><br>
-            リニューアル配送のお知らせ<br><br>
-            <span class="mock-hl s0">足を洗おう</span> · フットケア<br>
-            <span class="mock-hl s5">フットシャンプー</span> · 3,000円<br><br>
-            出荷記念 限定パッケージ<br>
-            <div class="mock-minimap">
-              <span class="s0" style="top: 28%"></span>
-              <span class="s1" style="top: 8%"></span>
-              <span class="s5" style="top: 42%"></span>
-            </div>
-          </div>
-        </div>
+      <div class="goal-block b2">
+        <div class="goal-label">OUTCOME · 기대 효과</div>
+        <h3 class="goal-title">품질과 정확도, 두 축의 향상</h3>
+        <ul class="goal-list">
+          <li>TM 누락 · 오검수 감소를 통한 품질 안정화</li>
+          <li>검색 · 필터링 기능 활용으로 검수 정확도 향상</li>
+          <li>한국어 자동 탐지로 미번역 누락 방지</li>
+        </ul>
       </div>
     </div>
   </div>
 </section>
 
-<!-- =========================================================
-     FEATURES
-     ========================================================= -->
+<!-- REAL USE CASES -->
+<section id="cases">
+  <div class="wrap">
+    <div class="section-head">
+      <div class="section-num">§03 · Real Use Cases</div>
+      <h2 class="section-title">
+        실제 검수 워크플로우<br>
+        <span class="accent">두 가지</span> 사례.
+      </h2>
+    </div>
+
+    <!-- Case 1 -->
+    <article class="case">
+      <div class="case-meta">
+        <span class="case-tag">CASE 01 · TM 다중 검색</span>
+        <h3 class="case-title">브랜드 · 제품 · 옵션 동시 검수</h3>
+        <p class="case-product">Shea Butter LHA Baby Scrub Stick</p>
+        <p class="case-body">
+          올리브영 글로벌몰 납품 검수 — 한 페이지에 브랜드명, 제품라인명,
+          옵션명, 제품명, 카테고리가 모두 등장합니다. 기존에는 5번을
+          따로 Ctrl+F로 검색해야 했지만,
+        </p>
+        <div class="case-quote">
+          "브랜드명, 제품명, 다른 제품의 같은 제품라인명 모두
+          검색 가능해서 검수 프로세스가 최적화되었습니다."
+        </div>
+        <p class="case-body">
+          의미별로, 단어별로, 제품명별 등 검수자가 정한 기준으로
+          다양한 바리에이션을 한 번에 검색할 수 있습니다.
+          색상별 마커가 미니맵에 표시되어 페이지 어디에 누락이
+          있는지 한눈에 파악됩니다.
+        </p>
+      </div>
+
+      <div class="case-mock">
+        <div class="mock-bar">
+          <div class="mock-dots"><span></span><span></span><span></span></div>
+          <span class="url">GA251235998_성분에디터_시아버터_라하_베이비_풋_스크럽_스틱_20g</span>
+        </div>
+        <div class="mock-toolbar">
+          <span class="mock-tag toggle">동기화 ON</span>
+          <span class="mock-tag">📍 위치 동기화</span>
+          <span class="mock-tag">🔎 검색</span>
+          <span class="mock-tag">⚠ KR 한국어 없음</span>
+        </div>
+        <div class="mock-search-rows">
+          <div class="mock-srow r0">
+            <span class="label">#1 브랜드</span>
+            <span class="lang">EN</span><span class="term">Shea Butter</span>
+            <span></span>
+          </div>
+          <div class="mock-srow r0" style="grid-template-columns: auto 1fr 1fr auto;">
+            <span class="label" style="visibility:hidden">_</span>
+            <span class="lang">JA</span><span class="term">シアバター</span>
+            <span></span>
+          </div>
+          <div class="mock-srow r1">
+            <span class="label">#2 제품라인</span>
+            <span class="lang">EN</span><span class="term">LHA</span>
+            <span></span>
+          </div>
+          <div class="mock-srow r2">
+            <span class="label">#3 옵션</span>
+            <span class="lang">EN</span><span class="term">Baby / ベビー</span>
+            <span></span>
+          </div>
+          <div class="mock-srow r3">
+            <span class="label">#4 제품명</span>
+            <span class="lang">EN</span><span class="term">Foot Scrub Stick</span>
+            <span></span>
+          </div>
+          <div class="mock-srow r4">
+            <span class="label">#5 카테고리</span>
+            <span class="lang">EN</span><span class="term">Scrub Stick</span>
+            <span></span>
+          </div>
+        </div>
+        <div class="mock-pills">
+          <span class="mock-pill p0"><b>#1</b>EN 26 / JA 26</span>
+          <span class="mock-pill p1"><b>#2</b>EN 11 / JA 11</span>
+          <span class="mock-pill p2"><b>#3</b>EN 23 / JA 22</span>
+          <span class="mock-pill p3"><b>#4</b>EN 6 / JA 5</span>
+          <span class="mock-pill p4"><b>#5</b>EN 8 / JA 7</span>
+        </div>
+        <div class="mock-content">
+          <div class="mock-panel">
+            <div class="mock-panel-tag">🇺🇸 EN · _en.html</div>
+            <div class="mock-h"><span class="en"><span class="mock-hl s0">Shea Butter</span></span><br>
+              <span class="en"><span class="mock-hl s1">LHA</span> <span class="mock-hl s2">Baby</span> <span class="mock-hl s4">Scrub Stick</span></span>
+            </div>
+            <p style="font-size: 11.5px; color: #a8a195;"><span class="mock-hl s3">Foot scrub stick</span> containing <span class="mock-hl s1">LHA</span> · two scrub particles</p>
+            <div class="mock-minimap">
+              <span class="s0" style="top: 12%"></span>
+              <span class="s1" style="top: 18%"></span>
+              <span class="s2" style="top: 22%"></span>
+              <span class="s3" style="top: 38%"></span>
+              <span class="s4" style="top: 22%"></span>
+              <span class="s0" style="top: 60%"></span>
+              <span class="s4" style="top: 75%"></span>
+            </div>
+          </div>
+          <div class="mock-panel">
+            <div class="mock-panel-tag">🇯🇵 JA · _ja.html</div>
+            <div class="mock-h"><span class="ja"><span class="mock-hl s0">シアバター</span></span><br>
+              <span class="ja"><span class="mock-hl s1">LHA</span><span class="mock-hl s2">ベビー</span><span class="mock-hl s4">スクラブスティック</span></span>
+            </div>
+            <p style="font-size: 11.5px; color: #a8a195;"><span class="mock-hl s1">LHA</span>と2種類のスクラブ粒子を配合し · <span class="mock-hl s3">フットスクラブスティック</span></p>
+            <div class="mock-minimap">
+              <span class="s0" style="top: 12%"></span>
+              <span class="s1" style="top: 18%"></span>
+              <span class="s2" style="top: 22%"></span>
+              <span class="s3" style="top: 38%"></span>
+              <span class="s4" style="top: 22%"></span>
+              <span class="s0" style="top: 60%"></span>
+              <span class="um s4" style="top: 75%"></span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </article>
+
+    <!-- Case 2 -->
+    <article class="case">
+      <div class="case-meta">
+        <span class="case-tag">CASE 02 · KO 원본 비교</span>
+        <h3 class="case-title">삭제 이미지 · 톤앤무드 검수</h3>
+        <p class="case-product">Probioderm Collagen Remodeling Line</p>
+        <p class="case-body">
+          KO 원본 파일을 함께 로드하면 백틱(`) 키 한 번으로 반대편
+          패널이 한국어 원본으로 즉시 전환됩니다. 마우스를 다른 패널로
+          옮기면 KR이 알아서 따라옵니다.
+        </p>
+        <div class="case-quote">
+          "연휴 배송안내, 이벤트, 한정 기획, 일반인 이미지 등
+          번역본에서 빠진 영역을 KO 원본과 비교해 즉시 확인할 수
+          있습니다."
+        </div>
+        <p class="case-body">
+          또한 번역본이 원본과 흡사한 톤앤무드를 유지하는지 — 색상,
+          배치, 강조 요소까지 — 한 화면에서 검수할 수 있어 최종
+          품질 게이트가 한층 견고해집니다.
+        </p>
+      </div>
+
+      <div class="case-mock">
+        <div class="mock-bar">
+          <div class="mock-dots"><span></span><span></span><span></span></div>
+          <span class="url">GA260237605_바이오힐보_프로바이오덤_콜라겐_리모델링</span>
+        </div>
+        <div class="mock-toolbar">
+          <span class="mock-tag">동기화 ON</span>
+          <span class="mock-tag toggle">🇰🇷 KR 원본 비교 ON</span>
+          <span class="mock-tag">🔎 검색 (3개 활성)</span>
+        </div>
+        <div class="mock-search-rows">
+          <div class="mock-srow r0">
+            <span class="label">#1 제품명</span>
+            <span class="lang">EN</span>
+            <span class="term">Collagen Remodeling Deep Cleansing Balm</span>
+            <span></span>
+          </div>
+          <div class="mock-srow r1">
+            <span class="label">#2 브랜드</span>
+            <span class="lang">EN</span>
+            <span class="term">Probioderm</span>
+            <span></span>
+          </div>
+          <div class="mock-srow r2">
+            <span class="label">#3 라인</span>
+            <span class="lang">EN</span>
+            <span class="term">Collagen Remodeling</span>
+            <span></span>
+          </div>
+        </div>
+        <div class="mock-content">
+          <div class="mock-panel">
+            <div class="mock-panel-tag">🇺🇸 EN · _en.html</div>
+            <div class="mock-h"><span class="en">Post-outing<br>firm skin texture<br>& pore-finish routine</span></div>
+            <p style="font-size: 12px; margin-top: 1em;"><span class="mock-hl s1">Probioderm</span>™ <span class="mock-hl s2">Collagen Remodeling</span> Line</p>
+            <p style="font-size: 11.5px; color: #a8a195; margin-top: 0.6em;">#Pore-Correcting Cleansing Balm<br><span class="mock-hl s2">Collagen Remodeling</span><br>Deep Cleansing Balm</p>
+            <div class="mock-minimap">
+              <span class="s1" style="top: 25%"></span>
+              <span class="s2" style="top: 27%"></span>
+              <span class="s2" style="top: 50%"></span>
+              <span class="s0" style="top: 55%"></span>
+              <span class="s2" style="top: 76%"></span>
+            </div>
+          </div>
+          <div class="mock-panel" style="background: linear-gradient(180deg, rgba(255,0,51,0.04), transparent);">
+            <div class="mock-panel-tag" style="color: var(--critical);">🇰🇷 KR 원본 (백틱으로 토글)</div>
+            <div class="mock-h" style="font-family: var(--display-kr); color: #d4ccbd;">외출 후<br>피부결 · 모공정돈<br>루틴</div>
+            <p style="font-size: 12px; margin-top: 1em; color: #c8c0b2;">프로바이오덤™ 콜라겐 리모델링 라인</p>
+            <p style="font-size: 11.5px; color: #a8a195; margin-top: 0.6em;">#모공보정 클렌징밤<br>콜라겐 리모델링<br>딥 클렌징 밤</p>
+            <p style="font-size: 10px; color: var(--mint); margin-top: 1em; font-family: var(--mono);">→ 톤앤무드 · 이미지 누락 검수</p>
+            <div class="mock-minimap"></div>
+          </div>
+        </div>
+      </div>
+    </article>
+  </div>
+</section>
+
+<!-- FEATURES -->
 <section id="features">
   <div class="wrap">
     <div class="section-head">
-      <div class="section-num">§03 · Features</div>
+      <div class="section-num">§04 · Features</div>
       <h2 class="section-title">
         정직한 기능,<br>
-        <span class="accent">검수자가 진짜 쓰는</span> 것들만.
+        <span class="accent">검수자가 진짜 쓰는</span> 것들.
       </h2>
     </div>
 
     <div class="features">
       <article class="feature span-7">
         <div class="feature-idx">F · 01</div>
-        <h3 class="feature-title">KR 원본 <em>토글 비교</em></h3>
+        <h3 class="feature-title">KO 원본 <em>토글 비교</em></h3>
         <p class="feature-body">
           백틱(`) 키 한 번이면 반대편 패널이 한국어 원본으로 즉시 전환됩니다.
           마우스를 다른 패널로 옮기면 KR이 알아서 따라옵니다.
-          끊김 없는 워크플로우의 핵심.
+          삭제 이미지·톤앤무드 검수의 핵심.
         </p>
         <div class="feature-kbd"><kbd>`</kbd><span style="color: var(--text-mute); font-family: var(--mono); font-size: 11px;">→ KR overlay 토글</span></div>
       </article>
 
       <article class="feature span-5">
         <div class="feature-idx">F · 02</div>
-        <h3 class="feature-title">한국어 <em>자동 검출</em></h3>
+        <h3 class="feature-title">한국어 <em>자동 탐지</em></h3>
         <p class="feature-body">
-          파일 로드 즉시 한국어 텍스트를 정규식으로 스캔.
-          드롭다운이 자동으로 열리고, 미니맵에 ⚠ 펄스 마커로 표시됩니다.
+          파일 로드 즉시 미번역 한국어를 정규식으로 스캔.
+          드롭다운이 자동으로 열리고, 미니맵에 ⚠ 펄스 마커로 표시.
+          드롭다운은 사용자가 끄기 전까지 닫히지 않습니다.
         </p>
       </article>
 
       <article class="feature span-5">
         <div class="feature-idx">F · 03</div>
-        <h3 class="feature-title">다중 색상 <em>TM 검색</em></h3>
+        <h3 class="feature-title">TM <em>다중 검색</em></h3>
         <p class="feature-body">
           검색어 10개를 동시에 색상별로 검색.
-          결과 카운트 pill을 클릭하면 해당 색만 강조됩니다.
+          브랜드 · 제품명 · 옵션 · 라인을 한 번에 한 화면에서.
         </p>
         <div class="feature-pillrow">
           <span class="fpill p0">#1</span>
@@ -1365,7 +1746,8 @@ footer {
         <h3 class="feature-title">매칭 차이 <em>시각화</em></h3>
         <p class="feature-body">
           같은 검색어가 EN/JA 중 한쪽에만 매칭된 줄을 자동으로 식별.
-          미니맵 왼쪽에 빨간 ▶ 마커로 표시되어 "번역 누락" 의심 지점을 즉시 발견할 수 있습니다.
+          미니맵 왼쪽에 빨간 ▶ 마커로 표시되어
+          <strong style="color: var(--text);">번역 누락 의심 지점</strong>을 즉시 발견할 수 있습니다.
           DOM 블록 인덱스 기반이라 위치 오차 없음.
         </p>
       </article>
@@ -1383,7 +1765,8 @@ footer {
         <div class="feature-idx">F · 06</div>
         <h3 class="feature-title">검색 <em>히스토리</em></h3>
         <p class="feature-body">
-          localStorage에 최근 20개 자동 저장. 새로고침 후에도 한 번 클릭으로 복원.
+          localStorage에 최근 20개 자동 저장.
+          새로고침 후에도 한 번 클릭으로 복원.
         </p>
       </article>
 
@@ -1391,23 +1774,22 @@ footer {
         <div class="feature-idx">F · 07</div>
         <h3 class="feature-title">CSV <em>내보내기</em></h3>
         <p class="feature-body">
-          한국어 검출 결과를 CSV로 즉시 다운로드. 보고서/이슈 트래킹 시스템에 바로 첨부.
+          한국어 검출 결과를 CSV로 즉시 다운로드.
+          보고서/이슈 트래킹에 바로 첨부.
         </p>
       </article>
     </div>
   </div>
 </section>
 
-<!-- =========================================================
-     ARCHITECTURE
-     ========================================================= -->
+<!-- ARCHITECTURE -->
 <section id="arch">
   <div class="wrap">
     <div class="section-head">
-      <div class="section-num">§04 · Architecture</div>
+      <div class="section-num">§05 · Architecture</div>
       <h2 class="section-title">
-        가장 단순한 도구가<br>
-        <span class="accent">가장 오래</span> 살아남습니다.
+        가장 <span class="accent">단순한</span> 도구가<br>
+        가장 오래 살아남습니다.
       </h2>
     </div>
 
@@ -1415,29 +1797,30 @@ footer {
       <div class="arch-text">
         <h3>단일 파일. 의존성 0. 백엔드 없음.</h3>
         <p>
-          모든 로직은 한 개의 <code style="font-family: var(--mono); color: var(--accent); font-size: 0.9em;">index.html</code> 안에 살아있습니다.
+          모든 로직은 한 개의 <code>index.html</code> 안에 살아있습니다.
           외부 라이브러리도, 빌드 도구도, 패키지 매니저도 필요하지 않습니다.
         </p>
         <p>
-          렌더링은 <strong style="color: var(--text);">Blob URL + iframe</strong>으로 Chrome과 동일한 결과를 보장하고,
-          UI와 검색 로직은 <strong style="color: var(--text);">postMessage Bridge</strong>로 격리되어 동작합니다.
+          렌더링은 <strong>Blob URL + iframe</strong>으로 Chrome과 동일한 결과를 보장하고,
+          UI와 검색 로직은 <strong>postMessage Bridge</strong>로 격리되어 동작합니다.
+          어떤 정적 호스팅에든 파일 하나 올리면 끝.
         </p>
 
         <dl class="arch-list">
-          <dt>Rendering</dt>
+          <dt>RENDERING</dt>
           <dd>Blob URL + iframe · Chrome 동일 렌더 보장</dd>
-          <dt>Communication</dt>
+          <dt>COMMUNICATION</dt>
           <dd>postMessage Bridge · ID 기반 비동기 매칭</dd>
-          <dt>Storage</dt>
-          <dd>localStorage · 검색 히스토리/테마/사이드바 상태</dd>
-          <dt>Animation</dt>
+          <dt>STORAGE</dt>
+          <dd>localStorage · 검색 히스토리 · 테마 · 사이드바 상태</dd>
+          <dt>ANIMATION</dt>
           <dd>requestAnimationFrame · 60fps 스크롤 동기화</dd>
         </dl>
       </div>
 
       <div class="diagram">
         <div class="dg-frame parent">
-          <div class="dg-frame-label">Parent · index.html</div>
+          <div class="dg-frame-label">PARENT · index.html</div>
           <div class="dg-row">
             <div class="dg-box">Header<small>UI · State</small></div>
             <div class="dg-box">Sidebar<small>TM Search</small></div>
@@ -1450,9 +1833,9 @@ footer {
           </div>
         </div>
         <div class="dg-bridge">postMessage · search · korean · scroll · setScroll · goBlock</div>
-        <div style="font-family: var(--mono); font-size: 10.5px; color: var(--text-mute); letter-spacing: 0.05em; line-height: 1.7; padding: 0.5rem 0.5rem 0;">
+        <div style="font-family: var(--sans); font-size: 12px; color: var(--text-mute); letter-spacing: -0.005em; line-height: 1.7; padding: 0.5rem 0.5rem 0;">
           → 비동기 통신 · ID 기반 요청/응답 매칭<br>
-          → iframe sandbox 격리로 보안 안전<br>
+          → iframe sandbox로 보안 격리<br>
           → 무거운 DOM 작업은 iframe 내에서, UI는 parent에서
         </div>
       </div>
@@ -1460,34 +1843,32 @@ footer {
   </div>
 </section>
 
-<!-- =========================================================
-     CODE SAMPLE
-     ========================================================= -->
+<!-- CODE -->
 <section id="code">
   <div class="wrap">
     <div class="section-head">
-      <div class="section-num">§05 · The Protocol</div>
+      <div class="section-num">§06 · Protocol</div>
       <h2 class="section-title">
         정직한 코드,<br>
-        <span class="accent">읽으면 그대로 동작</span>.
+        <span class="accent">읽으면 그대로</span> 동작합니다.
       </h2>
     </div>
 
     <div class="code-section">
       <div>
-        <h3 style="font-family: var(--serif); font-weight: 350; font-size: 1.6rem; letter-spacing: -0.02em; margin-bottom: 1rem;">postMessage Bridge</h3>
-        <p style="color: var(--text-soft); margin-bottom: 1rem;">
-          parent와 iframe은 ID로 매칭되는 비동기 메시지로 통신합니다.
+        <h3>postMessage Bridge</h3>
+        <p>
+          parent와 iframe은 <strong style="color: var(--text);">ID로 매칭되는 비동기 메시지</strong>로 통신합니다.
           한 iframe에 여러 명령을 동시에 발사해도 응답이 섞이지 않습니다.
         </p>
-        <p style="color: var(--text-mute); font-size: 0.9rem;">
-          모든 명령(search, korean, setScroll, goBlock)이 같은 패턴.
-          <span style="color: var(--accent); font-family: var(--mono);">전체 프로토콜 8개</span>가 끝.
+        <p style="color: var(--text-mute); font-size: 0.93rem;">
+          모든 명령(search · korean · setScroll · goBlock)이 같은 패턴.
+          전체 프로토콜 8개가 끝입니다.
         </p>
       </div>
       <div class="code-block">
         <div class="code-header">
-          <span>bridge.js — request/response</span>
+          <span>bridge.js · request/response</span>
           <span style="color: var(--accent);">JS</span>
         </div>
         <div class="code-body"><span class="c-com">// parent → iframe 비동기 메시지 (ID 기반)</span>
@@ -1504,35 +1885,28 @@ footer {
   });
 }
 
-<span class="c-com">// iframe 응답 수신</span>
-window.<span class="c-fn">addEventListener</span>(<span class="c-str">'message'</span>, e => {
-  <span class="c-key">const</span> { t, id, r } = e.data;
-  <span class="c-key">if</span> (id && pending.<span class="c-fn">has</span>(id)) {
-    pending.<span class="c-fn">get</span>(id)(e.data);
-    pending.<span class="c-fn">delete</span>(id);
-  }
-});
-
-<span class="c-com">// 사용 예</span>
+<span class="c-com">// 사용 예 — 다중 검색</span>
 <span class="c-key">const</span> result = <span class="c-key">await</span> <span class="c-fn">sendMsg</span>(<span class="c-str">'en'</span>, {
   t: <span class="c-str">'search'</span>,
-  queries: [{ q: <span class="c-str">'Wash Your Feet'</span>, cls: <span class="c-str">'oy-search-hl-0'</span> }]
+  queries: [
+    { q: <span class="c-str">'Shea Butter'</span>, cls: <span class="c-str">'oy-search-hl-0'</span> },
+    { q: <span class="c-str">'LHA'</span>,         cls: <span class="c-str">'oy-search-hl-1'</span> },
+    { q: <span class="c-str">'Baby'</span>,        cls: <span class="c-str">'oy-search-hl-2'</span> },
+  ]
 });</div>
       </div>
     </div>
   </div>
 </section>
 
-<!-- =========================================================
-     NUMBERS / BENTO
-     ========================================================= -->
+<!-- NUMBERS -->
 <section id="numbers">
   <div class="wrap">
     <div class="section-head">
-      <div class="section-num">§06 · Numbers</div>
+      <div class="section-num">§07 · Numbers</div>
       <h2 class="section-title">
         측정된 효율.<br>
-        <span class="accent">감으로 만든 게</span> 아닙니다.
+        <span class="accent">감으로</span> 만든 게 아닙니다.
       </h2>
     </div>
 
@@ -1540,17 +1914,17 @@ window.<span class="c-fn">addEventListener</span>(<span class="c-str">'message'<
       <div class="cell b1">
         <div>
           <div class="cell-val">≈ 87<span class="unit">%</span></div>
-          <div class="cell-label">시간 단축</div>
+          <div class="cell-label">검수 시간 단축</div>
         </div>
         <p class="cell-desc">
-          기존 2시간 수작업 → 평균 15분.
-          Flitto 이미지팀 검수자 6명 평균 기준.
+          기존 2시간 수작업 → 평균 15분. 올리브영 글로벌몰 3-4월 납품 검수 기간
+          내부 측정 기준.
         </p>
       </div>
 
       <div class="cell b2">
         <div class="cell-val">10<span class="unit">×</span></div>
-        <div class="cell-label">동시 검색 색상</div>
+        <div class="cell-label">동시 TM 검색 색상</div>
       </div>
 
       <div class="cell b3">
@@ -1565,7 +1939,7 @@ window.<span class="c-fn">addEventListener</span>(<span class="c-str">'message'<
         </div>
         <p class="cell-desc">
           단일 HTML 파일. CDN 캐시 한 번이면 즉시 로드.
-          모든 화면이 client-side에서 처리되어 서버 부하 0.
+          모든 처리가 client-side에서 — 서버 부하 0.
         </p>
       </div>
 
@@ -1577,13 +1951,11 @@ window.<span class="c-fn">addEventListener</span>(<span class="c-str">'message'<
   </div>
 </section>
 
-<!-- =========================================================
-     ADOPTION (3-STEP)
-     ========================================================= -->
+<!-- ADOPTION -->
 <section id="adopt">
   <div class="wrap">
     <div class="section-head">
-      <div class="section-num">§07 · Adoption</div>
+      <div class="section-num">§08 · Adoption</div>
       <h2 class="section-title">
         도입은 <span class="accent">3분</span>.<br>
         설치도, 회원가입도 없습니다.
@@ -1595,14 +1967,14 @@ window.<span class="c-fn">addEventListener</span>(<span class="c-str">'message'<
         <div class="step-num">01</div>
         <div class="step-title">파일 받기</div>
         <p class="step-body">
-          <code style="font-family: var(--mono); color: var(--accent); font-size: 0.9em;">index.html</code> 한 개를 다운로드.
+          <code>index.html</code> 한 개를 다운로드.
           사내 정적 서버 어디든 업로드하면 끝입니다.
         </p>
       </article>
 
       <article class="step">
         <div class="step-num">02</div>
-        <div class="step-title">접속 공유</div>
+        <div class="step-title">URL 공유</div>
         <p class="step-body">
           호스팅 URL을 검수팀 슬랙에 공유.
           북마크 추가 권장 — 다음 작업부터 즉시 사용 가능.
@@ -1613,31 +1985,29 @@ window.<span class="c-fn">addEventListener</span>(<span class="c-str">'message'<
         <div class="step-num">03</div>
         <div class="step-title">검수 시작</div>
         <p class="step-body">
-          EN · JA · KR 파일 3개를 화면에 드래그.
-          파일명으로 자동 분류, 한국어 자동 검출 — 검수 시작 준비 완료.
+          EN · JA · KR 파일 3개를 드래그.
+          파일명으로 자동 분류, 한국어 자동 검출 — 즉시 시작.
         </p>
       </article>
     </div>
 
     <div style="margin-top: 3rem; padding: 1.8rem 2rem; background: var(--bg-elev); border-left: 3px solid var(--accent); border-radius: 0 4px 4px 0;">
-      <p style="font-family: var(--serif); font-style: italic; font-size: 1.2rem; line-height: 1.4; color: var(--text-soft);">
-        "더 자세한 배포·커스터마이징 정보는
+      <p style="font-family: var(--display-kr); font-weight: 500; font-size: 1.1rem; line-height: 1.55; color: var(--text-soft); letter-spacing: -0.02em;">
+        더 자세한 배포 · 커스터마이징 · 트러블슈팅은
         <a href="./MIGRATION.md" style="color: var(--accent); text-decoration: none; border-bottom: 1px solid var(--accent);">MIGRATION.md</a>에
-        담겨 있습니다."
+        총정리되어 있습니다.
       </p>
     </div>
   </div>
 </section>
 
-<!-- =========================================================
-     TECH STACK STRIP
-     ========================================================= -->
+<!-- TECH STACK -->
 <section id="stack">
   <div class="wrap">
     <div class="section-head">
-      <div class="section-num">§08 · Stack</div>
+      <div class="section-num">§09 · Stack</div>
       <h2 class="section-title">
-        기술은 <span class="accent">단순할수록</span> 오래갑니다.
+        기술은 <span class="accent">단순할수록</span><br>오래 갑니다.
       </h2>
     </div>
 
@@ -1676,9 +2046,7 @@ window.<span class="c-fn">addEventListener</span>(<span class="c-str">'message'<
   </div>
 </section>
 
-<!-- =========================================================
-     FINAL CTA
-     ========================================================= -->
+<!-- FINAL CTA -->
 <section class="final">
   <div class="wrap final-inner">
     <h2>
@@ -1691,15 +2059,13 @@ window.<span class="c-fn">addEventListener</span>(<span class="c-str">'message'<
     </p>
     <div class="final-cta-row">
       <a href="https://blankers2.github.io/HTML-checker-dist/" class="hero-cta">앱 실행하기</a>
-      <a href="./MIGRATION.md" class="hero-cta-secondary">기술 문서 보기</a>
-      <a href="https://github.com/Blankers2/HTML-checker-dist" class="hero-cta-secondary">GitHub 저장소</a>
+      <a href="./MIGRATION.md" class="hero-cta-secondary">기술 문서 →</a>
+      <a href="https://github.com/Blankers2/HTML-checker-dist" class="hero-cta-secondary">GitHub 저장소 →</a>
     </div>
   </div>
 </section>
 
-<!-- =========================================================
-     FOOTER
-     ========================================================= -->
+<!-- FOOTER -->
 <footer>
   <div class="wrap">
     <div class="foot-grid">
