@@ -6,6 +6,9 @@
 
 별도 설치 없이 Chrome에서 바로 사용 가능합니다.
 
+📑 **소개 보고서**: [pitch.html](https://blankers2.github.io/HTML-checker-dist/pitch.html) (비주얼 피치 문서)
+🛠 **개발자/도입 가이드**: [MIGRATION.md](./MIGRATION.md) (요구사항·아키텍처·커스터마이징 전체 정리)
+
 ---
 
 ## 🧰 전체 기능
