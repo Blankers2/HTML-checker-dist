@@ -491,8 +491,8 @@
     /* legacy */
     .mark-search { background: #ffaa00; z-index: 2; }
 
-    /* pill 클릭 필터링 — 미니맵 마커 dim/highlight (한국어 마커는 제외) */
-    .minimap[data-search-filter] .minimap-mark:not(.mark-korean) { opacity: 0.1; transition: opacity 0.15s; }
+    /* pill 클릭 필터링 — 미니맵 마커 dim/highlight */
+    .minimap[data-search-filter] .minimap-mark { opacity: 0.1; transition: opacity 0.15s; }
     .minimap[data-search-filter="0"] .mark-search-0,
     .minimap[data-search-filter="1"] .mark-search-1,
     .minimap[data-search-filter="2"] .mark-search-2,
@@ -503,6 +503,8 @@
     .minimap[data-search-filter="7"] .mark-search-7,
     .minimap[data-search-filter="8"] .mark-search-8,
     .minimap[data-search-filter="9"] .mark-search-9 { opacity: 1; }
+    /* 한국어 마커는 검색 필터 활성 시에도 항상 풀 opacity 유지 (펄스 + 글로우 보존) */
+    .minimap[data-search-filter] .mark-korean { opacity: 1; }
 
     /* unmatched 마커 — 미니맵 왼쪽 외부에 ▶ 표시 (반대 언어에 매칭 블록 없음) */
     .minimap-mark.unmatched::before {
