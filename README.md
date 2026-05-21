@@ -8,6 +8,7 @@
 
 📑 **소개 보고서**: [pitch.html](https://blankers2.github.io/HTML-checker-dist/pitch.html) (비주얼 피치 문서)
 📊 **발표용 PPT**: [HTML-Checker_기능_요구사항_정의.pptx](./HTML-Checker_기능_요구사항_정의.pptx) (전체 기능 · 요구사항 정의 — 구글 슬라이드 호환)
+✅ **QC 체크리스트**: [HTML-Checker_QC_체크리스트.xlsx](./HTML-Checker_QC_체크리스트.xlsx) (7단계 QC 플로우 — 구글 시트 호환)
 🛠 **개발자/도입 가이드**: [MIGRATION.md](./MIGRATION.md) (요구사항·아키텍처·커스터마이징 전체 정리)
 
 ---
