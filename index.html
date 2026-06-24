@@ -1192,6 +1192,7 @@
       <label class="file-label" id="enLabel"><input type="file" id="enFile" accept=".html,.htm"><span>📁 EN</span></label>
       <label class="file-label" id="jaLabel"><input type="file" id="jaFile" accept=".html,.htm"><span>📁 JA</span></label>
       <label class="file-label" id="krLabel" title="한국어 원본 (선택사항)"><input type="file" id="krFile" accept=".html,.htm"><span>📁 KR</span></label>
+      <button class="btn btn-sm" id="domesticLinkBtn" hidden title="국내몰(올리브영) 통합검색 ↗ — 파일명 제품명으로 검색">🔍 국내몰</button>
     </div>
     <div class="header-center">
       <div class="scroll-controls">
@@ -1693,6 +1694,7 @@
     }
     function setFilename(lang, name) {
       loadedFilename[lang] = name || null;
+      updateDomesticBtn();
       const el = $(lang + 'Filename');
       if (!el) return;
       el.textContent = stripExt(name);
@@ -1708,6 +1710,28 @@
         el.title = '파일명 (더블클릭으로 선택 가능)';
       }
     }
+    // 국내몰(올리브영) 통합검색 — 파일명에서 한국어 제품명 추출 (GA코드 미사용)
+    function buildDomesticQuery(name) {
+      let s = stripExt(name || '');
+      s = s.replace(/^GA\d+[_-]?/i, '');                      // GA코드 접두 제거
+      s = s.replace(/[_-](en|ja|kr|origin)([_-]\d+)?$/i, '');  // 언어 + ID 접미 제거
+      s = s.replace(/[_-]\d[^_-]*$/, '');                      // 끝 사이즈/용량 토큰 제거 (숫자로 시작)
+      s = s.replace(/[_-]+/g, ' ').trim();                     // 구분자 → 공백
+      return s;
+    }
+    function updateDomesticBtn() {
+      const btn = $('domesticLinkBtn');
+      if (!btn) return;
+      const name = loadedFilename.kr || loadedFilename.en || loadedFilename.ja || null;
+      btn.hidden = !name;
+    }
+    $('domesticLinkBtn').onclick = () => {
+      const name = loadedFilename.kr || loadedFilename.en || loadedFilename.ja;
+      if (!name) return;
+      const q = buildDomesticQuery(name);
+      if (!q) return toast('제품명을 추출할 수 없습니다');
+      window.open('https://www.oliveyoung.co.kr/store/search/getSearchMain.do?query=' + encodeURIComponent(q) + '&giftYn=N', '_blank', 'noopener');
+    };
     function reloadAll() {
       let cnt = 0;
       ['en', 'ja', 'kr'].forEach(l => {
