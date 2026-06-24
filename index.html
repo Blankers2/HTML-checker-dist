@@ -2510,6 +2510,7 @@
     let _lastActiveQIdxSet = new Set(); // 이번 검색에서 쿼리를 입력한 qIdx 전체
     let _searchFilter = null; // null = 전체, number = qIdx만
     let _searchHLOff = false; // H 키로 검색 하이라이트 일시 토글 (true = 색칠 OFF)
+    let _hlLastToggleTs = 0;  // H 연속 토글(깜빡임) 방지용 타임스탬프
     function resetSearchHL() {
       // 새 검색/초기화 시 하이라이트는 항상 ON 상태에서 시작
       _searchHLOff = false;
@@ -2657,13 +2658,17 @@
         e.preventDefault(); toggleSidebar(true);
         setTimeout(() => { if (typeof focusFirstSearchInput === 'function') focusFirstSearchInput(); }, 100);
       }
-      // H — 검색 하이라이트 일시 토글 (입력창 포커스 시 무시)
+      // H — 검색 하이라이트 일시 토글 (입력창 포커스 시 무시, 꾹 누름/연속 깜빡임 방지)
       if (e.key === 'h' || e.key === 'H') {
+        if (e.repeat) return; // 키 꾹 누름(auto-repeat) 무시
         const tag = e.target && e.target.tagName;
         if (tag === 'INPUT' || tag === 'TEXTAREA' || (e.target && e.target.isContentEditable)) return;
         if (e.ctrlKey || e.metaKey || e.altKey) return; // 순수 H 만
         if (!_lastActiveQIdxSet || !_lastActiveQIdxSet.size) return; // 검색 결과 없으면 무시
         e.preventDefault();
+        const now = Date.now();
+        if (now - _hlLastToggleTs < 600) return; // 연속 깜빡임 방지
+        _hlLastToggleTs = now;
         _searchHLOff = !_searchHLOff;
         ['en', 'ja'].forEach(l => $(l + 'Frame')?.contentWindow?.postMessage({ t: 'toggleSearchHL', off: _searchHLOff }, '*'));
         ['en', 'ja'].forEach(l => $(l + 'Minimap')?.classList.toggle('hl-off', _searchHLOff));
