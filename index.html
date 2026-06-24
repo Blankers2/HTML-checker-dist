@@ -1181,6 +1181,11 @@
       transform: translateY(0);
       opacity: 1
     }
+
+    .toast.left {
+      right: auto;
+      left: 16px
+    }
   </style>
 </head>
 
@@ -1355,7 +1360,7 @@
     if (localStorage.getItem('oy-theme')) { document.documentElement.dataset.theme = localStorage.getItem('oy-theme'); if (localStorage.getItem('oy-theme') === 'light') $('themeBtn').textContent = '☀️' }
 
     /* TOAST */
-    function toast(m) { const t = $('toast'); t.textContent = m; t.classList.add('show'); setTimeout(() => t.classList.remove('show'), 2500) }
+    function toast(m, pos) { const t = $('toast'); t.textContent = m; t.classList.toggle('left', pos === 'left'); t.classList.add('show'); setTimeout(() => t.classList.remove('show'), 2500) }
 
     /* SIDEBAR */
     function toggleSidebar(show) {
@@ -2696,7 +2701,7 @@
         _searchHLOff = !_searchHLOff;
         ['en', 'ja'].forEach(l => $(l + 'Frame')?.contentWindow?.postMessage({ t: 'toggleSearchHL', off: _searchHLOff }, '*'));
         ['en', 'ja'].forEach(l => $(l + 'Minimap')?.classList.toggle('hl-off', _searchHLOff));
-        toast(_searchHLOff ? '🎨 검색 하이라이트 OFF (H)' : '🎨 검색 하이라이트 ON (H)');
+        toast(_searchHLOff ? '🎨 검색 하이라이트 OFF (H)' : '🎨 검색 하이라이트 ON (H)', 'left');
       }
       // 검색 초기화 단축키 — Ctrl+Shift+X
       if (e.ctrlKey && e.shiftKey && (e.key === 'X' || e.key === 'x')) {
