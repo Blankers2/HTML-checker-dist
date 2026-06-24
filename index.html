@@ -326,6 +326,8 @@
       cursor: text;
       padding: 0 8px;
     }
+    .panel-filename.oy-link { cursor: pointer; text-decoration: underline dotted; text-underline-offset: 2px; }
+    .panel-filename.oy-link:hover { color: var(--accent, #ff5c2b); text-decoration-style: solid; }
 
     .panel-filename:empty::before {
       content: '— 파일 미선택 —';
@@ -505,6 +507,8 @@
     .minimap[data-search-filter="9"] .mark-search-9 { opacity: 1; }
     /* 한국어 마커는 검색 필터 활성 시에도 항상 풀 opacity 유지 (펄스 + 글로우 보존) */
     .minimap[data-search-filter] .mark-korean { opacity: 1; }
+    /* H 키 토글 — 검색 마커만 숨김 (한국어 마커는 유지) */
+    .minimap.hl-off [class*="mark-search-"] { display: none; }
 
     /* unmatched 마커 — 미니맵 왼쪽 외부에 ▶ 표시 (반대 언어에 매칭 블록 없음) */
     .minimap-mark.unmatched::before {
@@ -1244,6 +1248,7 @@
             <div class="shortcut-row"><span>동기 스크롤</span><span class="shortcut-key">Shift + Wheel</span></div>
             <div class="shortcut-row"><span>검색 패널 열기</span><span class="shortcut-key">Ctrl + Shift + F</span></div>
             <div class="shortcut-row"><span>검색 초기화</span><span class="shortcut-key">Ctrl + Shift + X</span></div>
+            <div class="shortcut-row"><span>검색 하이라이트 ON/OFF 토글</span><span class="shortcut-key">H</span></div>
             <div class="shortcut-row"><span>검색어 비우기 (포커스 시)</span><span class="shortcut-key">Esc</span></div>
             <div class="shortcut-row"><span>원본(KR) 비교 ON/OFF 토글</span><span class="shortcut-key">`</span></div>
           </div>
@@ -1569,6 +1574,7 @@
           parent.postMessage({ t: 'koreanR', id: m.id, r: res }, '*');
         }
         if (m.t === 'clear') { clrAllSearch(); clr('oy-korean-hl'); }
+        if (m.t === 'toggleSearchHL') { document.documentElement.classList.toggle('oy-hl-off', !!m.off); }
         if (m.t === 'extract') { const res = []; document.querySelectorAll('.text-info').forEach((b, i) => { const t = blockText(b); if (t) res.push({ i: i, text: t }); }); parent.postMessage({ t: 'extractR', id: m.id, r: res }, '*'); }
         if (m.t === 'goBlock') { const bs = document.querySelectorAll('.text-info'); if (bs[m.i]) { const r = bs[m.i].getBoundingClientRect(); window.scrollTo({ top: window.scrollY + r.top - 100, behavior: 'smooth' }); } }
       });
@@ -1656,6 +1662,7 @@
         'mark.oy-search-hl-8{background:rgba(239,68,68,0.55)!important;color:#fff!important}',  /* 빨강 */
         'mark.oy-search-hl-9{background:rgba(31,41,55,0.85)!important;color:#fff!important}',    /* 검정 */
         'mark[class*="oy-search-hl"]{padding:0!important;margin:0!important;border-radius:2px!important}',
+        'html.oy-hl-off mark[class*="oy-search-hl"]{background:transparent!important;color:inherit!important;border-radius:0!important}',
         'mark.oy-korean-hl{background:rgba(255,0,51,0.4)!important;color:inherit!important;padding:0!important;margin:0!important;border-radius:2px!important;text-decoration:underline wavy #ff0033!important;text-decoration-thickness:1.5px!important;text-underline-offset:2px!important}',
       ].join('');
       // KR 원본은 raw <img>만 있어서 자연 크기로 노출 → max-width:100%로 패널 안에 맞추고, 작으면 중앙정렬+흰여백 (업스케일 X)
@@ -1687,7 +1694,19 @@
     function setFilename(lang, name) {
       loadedFilename[lang] = name || null;
       const el = $(lang + 'Filename');
-      if (el) el.textContent = stripExt(name);
+      if (!el) return;
+      el.textContent = stripExt(name);
+      // EN/JA 파일명 → 올리브영 글로벌몰 링크 (GA코드 추출)
+      const ga = name ? (name.match(/GA\d+/i) || [])[0] : null;
+      if ((lang === 'en' || lang === 'ja') && ga) {
+        el.classList.add('oy-link');
+        el.title = '올리브영 글로벌몰 열기 ↗ (' + ga + ')';
+        el.onclick = () => window.open('https://global.oliveyoung.com/product/detail?prdtNo=' + ga, '_blank', 'noopener');
+      } else {
+        el.classList.remove('oy-link');
+        el.onclick = null;
+        el.title = '파일명 (더블클릭으로 선택 가능)';
+      }
     }
     function reloadAll() {
       let cnt = 0;
@@ -1755,8 +1774,7 @@
       if (m.t === 'fileLoad') {
         // 드롭된 iframe의 lang 사용 (e.source로 판별)
         const targetLang = lang; // lang is already resolved from e.source above
-        const label = $(targetLang + 'Label');
-        label.querySelector('span').textContent = '\u2705 ' + m.name.slice(0, 20) + (m.name.length > 20 ? '\u2026' : '');
+        setFileLabel(targetLang);
         setFilename(targetLang, m.name);
         loadHTML(m.html, targetLang);
         return;
@@ -1863,10 +1881,14 @@
         }
       });
     });
+    const FILE_LABELS = { en: '✅ EN 파일', ja: '✅ JA 파일', kr: '✅ 한국어 파일' };
+    function setFileLabel(lang) {
+      const label = $(lang + 'Label');
+      if (label) label.querySelector('span').textContent = FILE_LABELS[lang] || ('✅ ' + lang.toUpperCase());
+    }
     function handleFile(file, lang) {
       if (!file || !file.name.match(/\.html?$/i)) return toast('HTML 파일만 선택 가능합니다');
-      const label = $(lang + 'Label');
-      label.querySelector('span').textContent = '✅ ' + file.name.slice(0, 20) + (file.name.length > 20 ? '…' : '');
+      setFileLabel(lang);
       setFilename(lang, file.name);
       const r = new FileReader();
       r.onload = e => loadHTML(e.target.result, lang);
@@ -2459,6 +2481,7 @@
       pushHistory(searchRows);
       const o = getOpts(), allRes = [];
       clearMinimap('search');
+      resetSearchHL();
       for (const l of ['en', 'ja']) {
         const queries = l === 'en' ? enQs : jaQs;
         if (!queries.length || !filesLoaded[l]) continue;
@@ -2486,6 +2509,13 @@
     let _lastSearchResults = [];
     let _lastActiveQIdxSet = new Set(); // 이번 검색에서 쿼리를 입력한 qIdx 전체
     let _searchFilter = null; // null = 전체, number = qIdx만
+    let _searchHLOff = false; // H 키로 검색 하이라이트 일시 토글 (true = 색칠 OFF)
+    function resetSearchHL() {
+      // 새 검색/초기화 시 하이라이트는 항상 ON 상태에서 시작
+      _searchHLOff = false;
+      ['en', 'ja'].forEach(l => $(l + 'Minimap')?.classList.remove('hl-off'));
+      ['en', 'ja'].forEach(l => $(l + 'Frame')?.contentWindow?.postMessage({ t: 'toggleSearchHL', off: false }, '*'));
+    }
 
     function renderSearchPills() {
       // 미니맵 마커 dim/highlight 동기화
@@ -2591,6 +2621,7 @@
       _lastSearchResults = []; _lastActiveQIdxSet = new Set(); _searchFilter = null;
       $('searchCount').innerHTML = ''; $('searchResults').innerHTML = '';
       clearMinimap('search');
+      resetSearchHL();
       ['en', 'ja'].forEach(l => $(l + 'Frame').contentWindow?.postMessage({ t: 'clear' }, '*'));
     }
     $('searchBtn').onclick = doSearch;
@@ -2625,6 +2656,18 @@
       if (e.ctrlKey && e.shiftKey && (e.key === 'F' || e.key === 'f')) {
         e.preventDefault(); toggleSidebar(true);
         setTimeout(() => { if (typeof focusFirstSearchInput === 'function') focusFirstSearchInput(); }, 100);
+      }
+      // H — 검색 하이라이트 일시 토글 (입력창 포커스 시 무시)
+      if (e.key === 'h' || e.key === 'H') {
+        const tag = e.target && e.target.tagName;
+        if (tag === 'INPUT' || tag === 'TEXTAREA' || (e.target && e.target.isContentEditable)) return;
+        if (e.ctrlKey || e.metaKey || e.altKey) return; // 순수 H 만
+        if (!_lastActiveQIdxSet || !_lastActiveQIdxSet.size) return; // 검색 결과 없으면 무시
+        e.preventDefault();
+        _searchHLOff = !_searchHLOff;
+        ['en', 'ja'].forEach(l => $(l + 'Frame')?.contentWindow?.postMessage({ t: 'toggleSearchHL', off: _searchHLOff }, '*'));
+        ['en', 'ja'].forEach(l => $(l + 'Minimap')?.classList.toggle('hl-off', _searchHLOff));
+        toast(_searchHLOff ? '🎨 검색 하이라이트 OFF (H)' : '🎨 검색 하이라이트 ON (H)');
       }
       // 검색 초기화 단축키 — Ctrl+Shift+X
       if (e.ctrlKey && e.shiftKey && (e.key === 'X' || e.key === 'x')) {
